@@ -134,9 +134,8 @@ export default function Navbar() {
                       {item.label}
                       {item.hasDropdown && (
                         <svg
-                          className={`w-4 h-4 transition-transform flex-shrink-0 ${
-                            hoveredDropdown === item.label ? "rotate-180" : ""
-                          }`}
+                          className={`w-4 h-4 transition-transform flex-shrink-0 ${hoveredDropdown === item.label ? "rotate-180" : ""
+                            }`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -155,12 +154,11 @@ export default function Navbar() {
                       >
                         <div className="bg-gray-100 shadow-xl rounded-xl overflow-hidden border border-gray-200">
                           <div className="p-3">
-                            <div className={`grid gap-2 ${
-                              item.label === "Personal loan" ? "grid-cols-3 w-[600px]" :
-                              item.label === "Loan calculators" ? "grid-cols-3 w-[500px]" :
-                              "grid-cols-2 w-[400px]"
-                            }`}>
-                              {item.dropdownItems.map((dropdownItem) => (
+                            <div className={`grid gap-2 ${item.label === "Personal loan" ? "grid-cols-3 w-[600px]" :
+                                item.label === "Loan calculators" ? "grid-cols-3 w-[500px]" :
+                                  "grid-cols-2 w-[400px]"
+                              }`}>
+                              {item.dropdownItems?.map((dropdownItem) => (
                                 <Link
                                   key={dropdownItem.label}
                                   href={dropdownItem.href}
@@ -235,7 +233,7 @@ export default function Navbar() {
                   </Link>
                   {item.hasDropdown && (
                     <div className="pl-6 space-y-1 mt-1">
-                      {item.dropdownItems.map((dropdownItem) => (
+                      {item.dropdownItems?.map((dropdownItem) => (
                         <Link
                           key={dropdownItem.label}
                           href={dropdownItem.href}
