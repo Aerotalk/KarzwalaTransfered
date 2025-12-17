@@ -21,11 +21,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/logo.png",
+        url: "/karzwala-logo.png",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/logo.png",
+        url: "/karzwala-logo.png",
         media: "(prefers-color-scheme: dark)",
       },
       {
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
         type: "image/svg+xml",
       },
     ],
-    apple: "/logo.png",
+    apple: "/karzwala-logo.png",
   },
 }
 

@@ -91,11 +91,11 @@ export default function Navbar() {
           {/* Logo - White Background */}
           <Link href="/" className="flex items-center gap-3 pr-6 z-10 relative">
             <Image
-              src="/logo.png"
+              src="/karzwala-logo.png"
               alt="Karzwala"
-              width={200}
-              height={75}
-              className="h-16 w-auto object-contain"
+              width={500}
+              height={176}
+              className="h-40 w-auto object-contain"
             />
           </Link>
 
@@ -155,8 +155,8 @@ export default function Navbar() {
                         <div className="bg-gray-100 shadow-xl rounded-xl overflow-hidden border border-gray-200">
                           <div className="p-3">
                             <div className={`grid gap-2 ${item.label === "Personal loan" ? "grid-cols-3 w-[600px]" :
-                                item.label === "Loan calculators" ? "grid-cols-3 w-[500px]" :
-                                  "grid-cols-2 w-[400px]"
+                              item.label === "Loan calculators" ? "grid-cols-3 w-[500px]" :
+                                "grid-cols-2 w-[400px]"
                               }`}>
                               {item.dropdownItems?.map((dropdownItem) => (
                                 <Link

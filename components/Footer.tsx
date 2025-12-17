@@ -11,11 +11,11 @@ export default function Footer() {
         <div className="space-y-6 lg:col-span-[1.5]">
           {/* Logo & Info */}
           <Image
-            src="/logo.png"
+            src="/karzwala-logo.png"
             alt="Karzwala"
             width={300}
-            height={300}
-            className="h-16 w-auto"
+            height={112}
+            className="h-24 w-auto object-contain"
           />
           <p className="text-sm text-gray-600">
             Welcome to Karzwala. We provide loan at very reasonable interest,
