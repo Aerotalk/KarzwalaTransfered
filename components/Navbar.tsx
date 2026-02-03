@@ -87,7 +87,7 @@ export default function Navbar() {
 
       {/* Main Header */}
       <div className="bg-white -mt-px">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-0 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-0">
           {/* Logo - White Background */}
           <Link href="/" className="flex items-center gap-3 pr-6 z-10 relative">
             <Image
@@ -95,12 +95,12 @@ export default function Navbar() {
               alt="Karzwala"
               width={500}
               height={176}
-              className="h-40 w-auto object-contain"
+              className="h-16 w-auto object-contain"
             />
           </Link>
 
           {/* Orange Navigation Section - Rounded Bottom Left */}
-          <div className="flex-1 bg-orange-500 text-white rounded-bl-[2rem] px-8 py-3 flex items-center justify-between -ml-6">
+          <div className="flex-1 bg-orange-500 text-white rounded-bl-[2rem] px-8 py-2 flex items-center justify-between -ml-6">
             {/* Navigation */}
             <nav className="hidden lg:flex items-center gap-3 flex-nowrap whitespace-nowrap">
               {navItems.map((item) => {
