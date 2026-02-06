@@ -4,12 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
-export default function LoginPage() {
+export default function RegisterPage() {
     const [step, setStep] = useState(1);
 
     // Step 1 fields
     const [mobileNumber, setMobileNumber] = useState("");
-    const [dob, setDob] = useState("");
     const [agreedToTerms, setAgreedToTerms] = useState(false);
 
     // Step 2 & OTP fields
@@ -25,7 +24,6 @@ export default function LoginPage() {
         return (
             mobileNumber.length === 10 &&
             /^\d+$/.test(mobileNumber) &&
-            dob !== "" &&
             agreedToTerms
         );
     };
@@ -36,22 +34,17 @@ export default function LoginPage() {
 
     const [error, setError] = useState("");
 
-    const DUMMY_MOBILE = "9999999999";
     const DUMMY_OTP = "123456";
-    const DUMMY_DOB = "2000-01-01"; // YYYY-MM-DD format as returned by type="date" input
 
     const handleNext = () => {
         setError(""); // Clear previous errors
 
         if (step === 1) {
             if (validateStep1()) {
-                if (mobileNumber === DUMMY_MOBILE && dob === DUMMY_DOB) {
-                    setStep(2);
-                    setCountdown(30);
-                    setCanResend(false);
-                } else {
-                    setError("Invalid credentials. Please check your mobile number and date of birth.");
-                }
+                // In a real app, you would check if user exists or send OTP API here
+                setStep(2);
+                setCountdown(30);
+                setCanResend(false);
             } else {
                 setError("Please fill in all required fields correctly.");
             }
@@ -137,7 +130,7 @@ export default function LoginPage() {
                             Welcome to <br />
                             <span className="text-[#F46300]">Karzwala</span>
                         </h1>
-                        <p className="text-gray-600 text-lg">Login to access your dashboard and manage your loans.</p>
+                        <p className="text-gray-600 text-lg">Create an account to manage your loans.</p>
                     </div>
 
                     <div className="relative w-full aspect-square max-w-md mx-auto">
@@ -161,7 +154,7 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                {/* Right Panel - Login Form */}
+                {/* Right Panel - Register Form */}
                 <div className="flex-1 bg-white p-8 lg:p-12 overflow-y-auto lg:ml-[40%] flex items-center justify-center">
                     <div className="w-full max-w-md mx-auto">
                         {showSuccess ? (
@@ -174,25 +167,24 @@ export default function LoginPage() {
                                         </svg>
                                     </div>
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-3">Logged in successfully!</h2>
-                                {/* <p className="text-gray-600 mb-8">Redirecting you to your dashboard...</p> */}
-                                <button onClick={() => window.location.href = '/'} className="w-full bg-[#F46300] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg">
-                                    Go to Home Page
-                                </button>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-3">Registered successfully!</h2>
+                                <Link href="/login" className="w-full bg-[#F46300] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg inline-block">
+                                    Login Now
+                                </Link>
                             </div>
                         ) : (
                             <>
                                 <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                                    Welcome <span className="text-[#F46300]">Back</span>
+                                    Create <span className="text-[#F46300]">Account</span>
                                 </h2>
-                                <p className="text-gray-600 mb-8">Login to your account</p>
+                                <p className="text-gray-600 mb-8">Sign up to get started</p>
 
                                 <form className="space-y-6">
                                     {step === 1 ? (
                                         <>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Enter registered mobile number
+                                                    Enter mobile number
                                                 </label>
                                                 <div className="relative">
                                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
@@ -209,23 +201,6 @@ export default function LoginPage() {
                                                         }}
                                                         className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F46300] focus:border-transparent outline-none transition-all"
                                                         placeholder="Enter mobile number"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Enter your date of birth
-                                                </label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="date"
-                                                        value={dob}
-                                                        onChange={(e) => {
-                                                            setDob(e.target.value);
-                                                            if (error) setError("");
-                                                        }}
-                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F46300] focus:border-transparent outline-none transition-all"
                                                     />
                                                 </div>
                                             </div>
@@ -304,10 +279,7 @@ export default function LoginPage() {
                                     {step === 1 && (
                                         <div className="mt-6 text-center space-y-3">
                                             <p className="text-sm text-gray-600">
-                                                Didn't have an account? <Link href="/register" className="text-[#F46300] font-semibold hover:underline">Create now</Link>
-                                            </p>
-                                            <p className="text-sm text-gray-600">
-                                                Are you a partner? <Link href="/login-agent" className="text-[#F46300] font-semibold hover:underline">Login as a Partner</Link>
+                                                Already have an account? <Link href="/login" className="text-[#F46300] font-semibold hover:underline">Login now</Link>
                                             </p>
                                         </div>
                                     )}

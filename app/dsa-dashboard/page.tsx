@@ -19,7 +19,8 @@ import {
     MessageCircle,
     ChevronDown,
     Globe,
-    Loader2
+    Loader2,
+    LogOut
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -495,6 +496,15 @@ function DSADashboardContent() {
                                 </button>
                             ))}
                         </nav>
+                        <div className="pt-2 border-t border-gray-50">
+                            <button
+                                className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all font-bold text-gray-500 hover:bg-orange-50 hover:text-orange-600 group"
+                                onClick={() => router.push("/")}
+                            >
+                                <LogOut size={20} className="group-hover:translate-x-1 transition-transform" />
+                                <span className="text-[15px]">Log out</span>
+                            </button>
+                        </div>
                     </div>
                 </aside>
 

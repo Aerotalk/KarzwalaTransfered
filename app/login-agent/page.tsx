@@ -56,7 +56,7 @@ function AgentLoginForm() {
         // Mock Login
         setTimeout(() => {
             setIsLoading(false);
-            toast.success("Login Successful (Mock)!");
+            toast.success("Login Successful!");
 
             let redirectPath = "/affiliate-dashboard";
             if (role === 'dsa') redirectPath = "/dsa-dashboard";
@@ -194,7 +194,7 @@ function AgentLoginForm() {
                                             // Mock OTP Send
                                             setTimeout(() => {
                                                 setIsLoading(false);
-                                                toast.success(`OTP sent to ${phone} (Mock)`);
+                                                toast.success(`OTP sent to ${phone} `);
                                                 localStorage.setItem('loginPhone', phone);
                                                 setStep(5);
                                             }, 1000);
@@ -261,7 +261,7 @@ function AgentLoginForm() {
                                             // Mock Verify
                                             setTimeout(() => {
                                                 setIsLoading(false);
-                                                toast.success("Welcome back! (Mock)");
+                                                toast.success("Welcome back!");
 
                                                 let redirectPath = "/affiliate-dashboard";
                                                 if (role === 'dsa') redirectPath = "/dsa-dashboard";
@@ -318,7 +318,7 @@ function AgentLoginForm() {
                                         </div>
 
                                         <div className="flex justify-end">
-                                            <button type="button" onClick={() => toast.info("Forgot password flow mock")} className="text-sm text-[#F46300] hover:underline">Forgot password?</button>
+                                            <button type="button" onClick={() => toast.info("Forgot password flow")} className="text-sm text-[#F46300] hover:underline">Forgot password?</button>
                                         </div>
                                     </div>
 
