@@ -1,0 +1,328 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useState, useEffect } from "react";
+
+export default function LoginPage() {
+    const [step, setStep] = useState(1);
+
+    // Step 1 fields
+    const [mobileNumber, setMobileNumber] = useState("");
+    const [dob, setDob] = useState("");
+    const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+    // Step 2 & OTP fields
+    const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+    const [countdown, setCountdown] = useState(30);
+    const [canResend, setCanResend] = useState(false);
+
+    // Success state
+    const [showSuccess, setShowSuccess] = useState(false);
+
+    // Validation
+    const validateStep1 = () => {
+        return (
+            mobileNumber.length === 10 &&
+            /^\d+$/.test(mobileNumber) &&
+            dob !== "" &&
+            agreedToTerms
+        );
+    };
+
+    const validateStep2 = () => {
+        return otp.every(digit => digit !== "");
+    };
+
+    const [error, setError] = useState("");
+
+    const DUMMY_MOBILE = "9999999999";
+    const DUMMY_OTP = "123456";
+    const DUMMY_DOB = "2000-01-01"; // YYYY-MM-DD format as returned by type="date" input
+
+    const handleNext = () => {
+        setError(""); // Clear previous errors
+
+        if (step === 1) {
+            if (validateStep1()) {
+                if (mobileNumber === DUMMY_MOBILE && dob === DUMMY_DOB) {
+                    setStep(2);
+                    setCountdown(30);
+                    setCanResend(false);
+                } else {
+                    setError("Invalid credentials. Please check your mobile number and date of birth.");
+                }
+            } else {
+                setError("Please fill in all required fields correctly.");
+            }
+        } else if (step === 2) {
+            if (validateStep2()) {
+                if (otp.join("") === DUMMY_OTP) {
+                    setShowSuccess(true);
+                } else {
+                    setError("Invalid OTP. Please enter the correct verification code.");
+                }
+
+            } else {
+                setError("Please enter the complete OTP.");
+            }
+        }
+    };
+
+    const handleResendOTP = () => {
+        setCountdown(30);
+        setCanResend(false);
+        setOtp(["", "", "", "", "", ""]);
+    };
+
+    const handleOtpChange = (index: number, value: string) => {
+        if (value.length <= 1 && /^\d*$/.test(value)) {
+            const newOtp = [...otp];
+            newOtp[index] = value;
+            setOtp(newOtp);
+
+            // Auto-focus next input
+            if (value && index < 5) {
+                const nextInput = document.getElementById(`otp-${index + 1}`);
+                nextInput?.focus();
+            }
+        }
+    };
+
+    const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Backspace" && !otp[index] && index > 0) {
+            const prevInput = document.getElementById(`otp-${index - 1}`);
+            prevInput?.focus();
+        }
+    };
+
+    // Countdown timer
+    useEffect(() => {
+        if (step === 2 && countdown > 0) {
+            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+            return () => clearTimeout(timer);
+        } else if (countdown === 0) {
+            setCanResend(true);
+        }
+    }, [countdown, step]);
+
+    return (
+        <>
+            <style jsx>{`
+                @keyframes scaleIn {
+                    from { transform: scale(0.8); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+                @keyframes drawCircle {
+                    from { stroke-dasharray: 0 157; }
+                    to { stroke-dasharray: 157 157; }
+                }
+                @keyframes drawCheck {
+                    from { stroke-dasharray: 0 50; }
+                    to { stroke-dasharray: 50 50; }
+                }
+                .animate-scaleIn { animation: scaleIn 0.4s ease-out; }
+                .animate-circle { stroke-dasharray: 157 157; animation: drawCircle 0.6s ease-out forwards; }
+                .animate-check { stroke-dasharray: 0 50; animation: drawCheck 0.4s 0.3s ease-out forwards; }
+            `}</style>
+
+            <div className="h-screen flex overflow-hidden">
+                {/* Left Panel - Branding (Fixed) */}
+                <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-orange-50 to-white p-12 flex-col justify-between fixed left-0 top-0 bottom-0">
+                    <div>
+                        <div className="mb-12">
+                            <Image src="/karzwala-logo.png" alt="Karzwala" width={180} height={60} className="w-auto h-12" />
+                        </div>
+                        <h1 className="text-4xl font-bold text-gray-900 leading-tight mb-4">
+                            Welcome to <br />
+                            <span className="text-[#F46300]">Karzwala</span>
+                        </h1>
+                        <p className="text-gray-600 text-lg">Login to access your dashboard and manage your loans.</p>
+                    </div>
+
+                    <div className="relative w-full aspect-square max-w-md mx-auto">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                            <defs>
+                                <linearGradient id="loginGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#F46300" />
+                                    <stop offset="100%" stopColor="#FF8C42" />
+                                </linearGradient>
+                            </defs>
+                            <circle cx="100" cy="100" r="80" fill="url(#loginGradient)" opacity="0.1" />
+                            <path d="M60 100 L140 100 M100 60 L100 140" stroke="url(#loginGradient)" strokeWidth="2" />
+                            <rect x="70" y="70" width="60" height="60" rx="8" fill="white" stroke="#F46300" strokeWidth="2" />
+                            <circle cx="100" cy="90" r="10" fill="#F46300" />
+                            <path d="M80 120 C80 110, 120 110, 120 120" stroke="#F46300" strokeWidth="2" fill="none" />
+                        </svg>
+                    </div>
+
+                    <div className="text-sm text-gray-500">
+                        © 2024 Karzwala. All rights reserved.
+                    </div>
+                </div>
+
+                {/* Right Panel - Login Form */}
+                <div className="flex-1 bg-white p-8 lg:p-12 overflow-y-auto lg:ml-[40%] flex items-center justify-center">
+                    <div className="w-full max-w-md mx-auto">
+                        {showSuccess ? (
+                            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center animate-scaleIn">
+                                <div className="mb-6 flex justify-center">
+                                    <div className="relative w-24 h-24">
+                                        <svg className="w-24 h-24 animate-checkmark" viewBox="0 0 52 52">
+                                            <circle className="animate-circle" cx="26" cy="26" r="25" fill="none" stroke="#22C55E" strokeWidth="2" />
+                                            <path className="animate-check" fill="none" stroke="#22C55E" strokeWidth="3" strokeLinecap="round" d="M14 27l7 7 16-16" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-3">Logged in successfully!</h2>
+                                {/* <p className="text-gray-600 mb-8">Redirecting you to your dashboard...</p> */}
+                                <button onClick={() => window.location.href = '/'} className="w-full bg-[#F46300] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg">
+                                    Go to Home Page
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                                    Welcome <span className="text-[#F46300]">Back</span>
+                                </h2>
+                                <p className="text-gray-600 mb-8">Login to your account</p>
+
+                                <form className="space-y-6">
+                                    {step === 1 ? (
+                                        <>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Enter registered mobile number
+                                                </label>
+                                                <div className="relative">
+                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                                                        +91
+                                                    </span>
+                                                    <input
+                                                        type="text"
+                                                        value={mobileNumber}
+                                                        maxLength={10}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            if (/^\d*$/.test(val)) setMobileNumber(val);
+                                                            if (error) setError("");
+                                                        }}
+                                                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F46300] focus:border-transparent outline-none transition-all"
+                                                        placeholder="Enter mobile number"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Enter your date of birth
+                                                </label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="date"
+                                                        value={dob}
+                                                        onChange={(e) => {
+                                                            setDob(e.target.value);
+                                                            if (error) setError("");
+                                                        }}
+                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F46300] focus:border-transparent outline-none transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-start gap-3 mt-4">
+                                                <input
+                                                    type="checkbox"
+                                                    id="terms"
+                                                    checked={agreedToTerms}
+                                                    onChange={(e) => {
+                                                        setAgreedToTerms(e.target.checked);
+                                                        if (error) setError("");
+                                                    }}
+                                                    className="w-4 h-4 mt-1 text-[#F46300] border-gray-300 rounded focus:ring-[#F46300]"
+                                                />
+                                                <label htmlFor="terms" className="text-xs text-gray-600">
+                                                    By continuing, you agree to our <Link href="/privacy" className="text-[#F46300] hover:underline">privacy policies</Link> and <Link href="/terms" className="text-[#F46300] hover:underline">T&C</Link>. You also authorize us to <span className="text-[#F46300]">retrieve</span> & communicate with you via phone, e-mails, WhatsApp, etc.
+                                                </label>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        // Step 2: OTP
+                                        <div className="text-center">
+                                            <p className="text-sm text-gray-600 mb-6">
+                                                We have sent a verification code to <br />
+                                                <span className="font-semibold text-gray-900">+91 {mobileNumber}</span>
+                                            </p>
+
+                                            <div className="flex gap-3 justify-center mb-6">
+                                                {otp.map((digit, index) => (
+                                                    <input
+                                                        key={index}
+                                                        id={`otp-${index}`}
+                                                        type="text"
+                                                        maxLength={1}
+                                                        value={digit}
+                                                        onChange={(e) => {
+                                                            handleOtpChange(index, e.target.value);
+                                                            if (error) setError("");
+                                                        }}
+                                                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                                                        className="w-12 h-12 text-center text-xl font-semibold border-2 border-gray-300 rounded-lg focus:border-[#F46300] focus:ring-2 focus:ring-[#F46300] focus:outline-none transition-all"
+                                                    />
+                                                ))}
+                                            </div>
+
+                                            <div className="text-sm text-gray-600 mb-6">
+                                                {canResend ? (
+                                                    <button onClick={handleResendOTP} type="button" className="text-[#F46300] font-medium hover:underline">
+                                                        Resend OTP
+                                                    </button>
+                                                ) : (
+                                                    <span>Resend OTP in {countdown}sec</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {error && (
+                                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-600 text-sm animate-scaleIn">
+                                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {error}
+                                        </div>
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        onClick={handleNext}
+                                        className="w-full bg-[#F46300] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg mt-6"
+                                    >
+                                        {step === 1 ? "Get OTP" : "Verify OTP"}
+                                    </button>
+
+                                    {step === 1 && (
+                                        <div className="mt-6 text-center space-y-3">
+                                            <p className="text-sm text-gray-600">
+                                                Didn't have an account? <Link href="/apply-now" className="text-[#F46300] font-semibold hover:underline">Create now</Link>
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                Are you a partner? <Link href="/login-agent" className="text-[#F46300] font-semibold hover:underline">Login as a Partner</Link>
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {step === 2 && (
+                                        <button type="button" onClick={() => setStep(1)} className="w-full mt-2 text-gray-500 hover:text-gray-700 text-sm">
+                                            Change Number
+                                        </button>
+                                    )}
+                                </form>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+}

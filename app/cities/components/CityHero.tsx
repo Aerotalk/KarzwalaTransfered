@@ -1,23 +1,11 @@
-"use client";
-
 import Image from "next/image";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React from "react";
 
-const HeroSection: React.FC = () => {
-    const router = useRouter();
-    const [mobile, setMobile] = useState("");
-    const [loanType, setLoanType] = useState("");
+interface CityHeroProps {
+    city: string;
+}
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (mobile && loanType) {
-            router.push(`/apply-now?mobile=${mobile}&loanType=${loanType}`);
-        } else {
-            alert("Please fill in all required fields");
-        }
-    };
-
+const CityHero: React.FC<CityHeroProps> = ({ city }) => {
     return (
         <section className="bg-white">
             <div className="max-w-7xl mx-auto px-4 py-12 md:py-16 grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,0.9fr)] items-center">
@@ -26,29 +14,15 @@ const HeroSection: React.FC = () => {
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-12">
                         <div className="flex flex-col gap-4">
                             <h1 className="text-3xl md:text-4xl lg:text-[40px] font-bold leading-tight text-slate-900">
-                                <span className="whitespace-nowrap">Get{" "}
-                                    <span className="text-orange-500">business loans</span></span>
-                                <br />
-                                <span className="whitespace-nowrap">starting at{" "}
-                                    <span className="text-orange-500">12%* p.a</span></span>
+                                <span className="whitespace-nowrap">Get Instant Personal Loan{" "}
+                                    <span className="text-orange-500"> <br />Up to ₹10 Lakhs <br />In {city}{" "}</span></span>
                             </h1>
 
                             <p className="mt-4 text-sm md:text-base text-slate-600 max-w-xl">
-                                Whether it’s a medical emergency, monthly bills, travel, or
-                                unexpected expenses, Karzwala gives you fast, hassle-free
-                                personal loans. Simple online process, flexible tenures, and money
-                                when you need it.
+                                <li>Lower Interest Rate starting from <span className="text-orange-500">8.5% p.a.</span></li>
+                                <li>Fast Approval With Minimal Paperwork</li>
                             </p>
                         </div>
-
-                        {/* Illustration + badge row */}
-                        <Image
-                            src="/shout.png"
-                            alt="Hero Illustration"
-                            width={6000}
-                            height={4000}
-                            className="w-96 h-auto max-w-sm"
-                        />
                     </div>
 
                     {/* Stats bar */}
@@ -71,7 +45,6 @@ const HeroSection: React.FC = () => {
 
                         {/* Satisfied customers */}
                         <div className="px-6 py-4 border-b md:border-b-0 flex justify-between items-center gap-6">
-                            {/* <div className="px-6 py-4 flex justify-center gap-2"> */}
                             <div className="flex flex-col w-full">
                                 <span className="text-xl font-bold text-slate-900">
                                     50,000+
@@ -93,21 +66,19 @@ const HeroSection: React.FC = () => {
                                 </span>
                                 <span className="text-xs text-slate-500">Cities across India</span>
                             </div>
-                            {/* </div> */}
-
                         </div>
                     </div>
                 </div>
 
                 {/* Right: loan application card */}
                 <div className="lg:justify-self-end">
-                    <div className="bg-white rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.08)] px-8 py-7 md:px-8 md:py-8 w-full max-w-lg mx-auto">
+                    <div className="bg-white rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.08)] px-6 py-7 md:px-8 md:py-8 w-full max-w-lg mx-auto">
                         <h2 className="text-xl md:text-2xl font-semibold text-slate-900">
-                            <span className="text-orange-500">Apply</span> for loan online
+                            <span className="text-orange-500">Apply</span> for Personal Loan online
                         </h2>
 
                         {/* Form */}
-                        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+                        <form className="mt-6 space-y-4">
                             <div className="space-y-1">
                                 <label
                                     htmlFor="mobile"
@@ -120,8 +91,6 @@ const HeroSection: React.FC = () => {
                                     id="mobile"
                                     type="tel"
                                     placeholder=""
-                                    value={mobile}
-                                    onChange={(e) => setMobile(e.target.value)}
                                     className="w-full h-11 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
                                 />
                             </div>
@@ -136,15 +105,17 @@ const HeroSection: React.FC = () => {
                                 <select
                                     id="loanType"
                                     className="w-full h-11 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 bg-white"
-                                    value={loanType}
-                                    onChange={(e) => setLoanType(e.target.value)}
+                                    defaultValue=""
                                 >
                                     <option value="" disabled>
                                         Choose loan type
                                     </option>
-                                    <option value="personal">Personal Loan</option>
-                                    <option value="business">Business Loan</option>
-                                    <option value="msme">MSME Loan</option>
+                                    <option value="personal">Self-employed loan</option>
+                                    <option value="salaried">Salaried loan</option>
+                                    <option value="wedding">Wedding loan</option>
+                                    <option value="travel">Travel loan</option>
+                                    <option value="women">Loan for women</option>
+                                    <option value="debt">Debt consolidation loan</option>
                                 </select>
                             </div>
 
@@ -191,4 +162,4 @@ const HeroSection: React.FC = () => {
     );
 };
 
-export default HeroSection;
+export default CityHero;

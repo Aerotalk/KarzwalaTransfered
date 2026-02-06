@@ -3,8 +3,7 @@ import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
 // import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
-import Navbar from "@/components/Navbar"
-import Footer from "@/components/Footer"
+import ConditionalLayout from "@/components/ConditionalLayout"
 
 const poppinsFont = Poppins({
   subsets: ["latin"],
@@ -45,9 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppinsFont.className} antialiased`}>
-        <Navbar />
-        {children}
-        <Footer />
+        <ConditionalLayout>{children}</ConditionalLayout>
         {/* <Analytics /> */}
       </body>
     </html>
