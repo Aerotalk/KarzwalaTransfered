@@ -4,6 +4,7 @@ import { Poppins } from "next/font/google"
 // import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import ConditionalLayout from "@/components/ConditionalLayout"
+import { Toaster } from "sonner"
 
 const poppinsFont = Poppins({
   subsets: ["latin"],
@@ -45,6 +46,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppinsFont.className} antialiased`}>
         <ConditionalLayout>{children}</ConditionalLayout>
+        <Toaster position="top-center" richColors />
         {/* <Analytics /> */}
       </body>
     </html>
