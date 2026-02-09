@@ -4,12 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
+// API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function LoginPage() {
     const [step, setStep] = useState(1);
 
     // Step 1 fields
     const [mobileNumber, setMobileNumber] = useState("");
-    const [dob, setDob] = useState("");
     const [agreedToTerms, setAgreedToTerms] = useState(false);
 
     // Step 2 & OTP fields
@@ -20,12 +22,15 @@ export default function LoginPage() {
     // Success state
     const [showSuccess, setShowSuccess] = useState(false);
 
+    // API states
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
     // Validation
     const validateStep1 = () => {
         return (
             mobileNumber.length === 10 &&
             /^\d+$/.test(mobileNumber) &&
-            dob !== "" &&
             agreedToTerms
         );
     };
@@ -34,45 +39,92 @@ export default function LoginPage() {
         return otp.every(digit => digit !== "");
     };
 
-    const [error, setError] = useState("");
+    // API Functions
+    const requestOtp = async (phone: string) => {
+        const response = await fetch(`${API_BASE_URL}/api/auth/phone/request-otp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: `+91${phone}` })
+        });
 
-    const DUMMY_MOBILE = "9999999999";
-    const DUMMY_OTP = "123456";
-    const DUMMY_DOB = "2000-01-01"; // YYYY-MM-DD format as returned by type="date" input
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to send OTP");
+        }
 
-    const handleNext = () => {
-        setError(""); // Clear previous errors
+        return response.json();
+    };
+
+    const verifyOtp = async (phone: string, code: string) => {
+        const response = await fetch(`${API_BASE_URL}/api/auth/phone/verify-otp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: `+91${phone}`, code })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Invalid OTP");
+        }
+
+        return response.json();
+    };
+
+    const handleNext = async () => {
+        setError("");
 
         if (step === 1) {
             if (validateStep1()) {
-                if (mobileNumber === DUMMY_MOBILE && dob === DUMMY_DOB) {
+                setLoading(true);
+                try {
+                    await requestOtp(mobileNumber);
                     setStep(2);
                     setCountdown(30);
                     setCanResend(false);
-                } else {
-                    setError("Invalid credentials. Please check your mobile number and date of birth.");
+                } catch (err: any) {
+                    setError(err.message || "Failed to send OTP. Please try again.");
+                } finally {
+                    setLoading(false);
                 }
             } else {
                 setError("Please fill in all required fields correctly.");
             }
         } else if (step === 2) {
             if (validateStep2()) {
-                if (otp.join("") === DUMMY_OTP) {
-                    setShowSuccess(true);
-                } else {
-                    setError("Invalid OTP. Please enter the correct verification code.");
-                }
+                setLoading(true);
+                try {
+                    const otpCode = otp.join("");
+                    const result = await verifyOtp(mobileNumber, otpCode);
 
+                    // Store authentication token and user info
+                    localStorage.setItem('authToken', result.token);
+                    localStorage.setItem('authUser', JSON.stringify(result.user));
+
+                    setShowSuccess(true);
+                } catch (err: any) {
+                    setError(err.message || "Invalid OTP. Please try again.");
+                } finally {
+                    setLoading(false);
+                }
             } else {
                 setError("Please enter the complete OTP.");
             }
         }
     };
 
-    const handleResendOTP = () => {
-        setCountdown(30);
-        setCanResend(false);
-        setOtp(["", "", "", "", "", ""]);
+    const handleResendOTP = async () => {
+        setError("");
+        setLoading(true);
+        try {
+            await requestOtp(mobileNumber);
+            setCountdown(30);
+            setCanResend(false);
+            setOtp(["", "", "", "", "", ""]);
+        } catch (err: any) {
+            setError(err.message || "Failed to resend OTP. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleOtpChange = (index: number, value: string) => {
@@ -175,7 +227,7 @@ export default function LoginPage() {
                                     </div>
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-900 mb-3">Logged in successfully!</h2>
-                                {/* <p className="text-gray-600 mb-8">Redirecting you to your dashboard...</p> */}
+                                <p className="text-gray-600 mb-6">Welcome back! Redirecting you...</p>
                                 <button onClick={() => window.location.href = '/'} className="w-full bg-[#F46300] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg">
                                     Go to Home Page
                                 </button>
@@ -209,23 +261,7 @@ export default function LoginPage() {
                                                         }}
                                                         className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F46300] focus:border-transparent outline-none transition-all"
                                                         placeholder="Enter mobile number"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Enter your date of birth
-                                                </label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="date"
-                                                        value={dob}
-                                                        onChange={(e) => {
-                                                            setDob(e.target.value);
-                                                            if (error) setError("");
-                                                        }}
-                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F46300] focus:border-transparent outline-none transition-all"
+                                                        disabled={loading}
                                                     />
                                                 </div>
                                             </div>
@@ -240,6 +276,7 @@ export default function LoginPage() {
                                                         if (error) setError("");
                                                     }}
                                                     className="w-4 h-4 mt-1 text-[#F46300] border-gray-300 rounded focus:ring-[#F46300]"
+                                                    disabled={loading}
                                                 />
                                                 <label htmlFor="terms" className="text-xs text-gray-600">
                                                     By continuing, you agree to our <Link href="/privacy" className="text-[#F46300] hover:underline">privacy policies</Link> and <Link href="/terms" className="text-[#F46300] hover:underline">T&C</Link>. You also authorize us to <span className="text-[#F46300]">retrieve</span> & communicate with you via phone, e-mails, WhatsApp, etc.
@@ -268,13 +305,14 @@ export default function LoginPage() {
                                                         }}
                                                         onKeyDown={(e) => handleOtpKeyDown(index, e)}
                                                         className="w-12 h-12 text-center text-xl font-semibold border-2 border-gray-300 rounded-lg focus:border-[#F46300] focus:ring-2 focus:ring-[#F46300] focus:outline-none transition-all"
+                                                        disabled={loading}
                                                     />
                                                 ))}
                                             </div>
 
                                             <div className="text-sm text-gray-600 mb-6">
                                                 {canResend ? (
-                                                    <button onClick={handleResendOTP} type="button" className="text-[#F46300] font-medium hover:underline">
+                                                    <button onClick={handleResendOTP} type="button" className="text-[#F46300] font-medium hover:underline" disabled={loading}>
                                                         Resend OTP
                                                     </button>
                                                 ) : (
@@ -296,8 +334,15 @@ export default function LoginPage() {
                                     <button
                                         type="button"
                                         onClick={handleNext}
-                                        className="w-full bg-[#F46300] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg mt-6"
+                                        disabled={loading}
+                                        className="w-full bg-[#F46300] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
+                                        {loading && (
+                                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        )}
                                         {step === 1 ? "Get OTP" : "Verify OTP"}
                                     </button>
 
@@ -313,7 +358,7 @@ export default function LoginPage() {
                                     )}
 
                                     {step === 2 && (
-                                        <button type="button" onClick={() => setStep(1)} className="w-full mt-2 text-gray-500 hover:text-gray-700 text-sm">
+                                        <button type="button" onClick={() => setStep(1)} className="w-full mt-2 text-gray-500 hover:text-gray-700 text-sm" disabled={loading}>
                                             Change Number
                                         </button>
                                     )}

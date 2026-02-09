@@ -4,6 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
+// API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function RegisterPage() {
     const [step, setStep] = useState(1);
 
@@ -19,6 +22,10 @@ export default function RegisterPage() {
     // Success state
     const [showSuccess, setShowSuccess] = useState(false);
 
+    // API states
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
     // Validation
     const validateStep1 = () => {
         return (
@@ -32,40 +39,92 @@ export default function RegisterPage() {
         return otp.every(digit => digit !== "");
     };
 
-    const [error, setError] = useState("");
+    // API Functions
+    const requestOtp = async (phone: string) => {
+        const response = await fetch(`${API_BASE_URL}/api/auth/phone/request-otp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: `+91${phone}` })
+        });
 
-    const DUMMY_OTP = "123456";
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to send OTP");
+        }
 
-    const handleNext = () => {
-        setError(""); // Clear previous errors
+        return response.json();
+    };
+
+    const verifyOtp = async (phone: string, code: string) => {
+        const response = await fetch(`${API_BASE_URL}/api/auth/phone/verify-otp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: `+91${phone}`, code })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Invalid OTP");
+        }
+
+        return response.json();
+    };
+
+    const handleNext = async () => {
+        setError("");
 
         if (step === 1) {
             if (validateStep1()) {
-                // In a real app, you would check if user exists or send OTP API here
-                setStep(2);
-                setCountdown(30);
-                setCanResend(false);
+                setLoading(true);
+                try {
+                    await requestOtp(mobileNumber);
+                    setStep(2);
+                    setCountdown(30);
+                    setCanResend(false);
+                } catch (err: any) {
+                    setError(err.message || "Failed to send OTP. Please try again.");
+                } finally {
+                    setLoading(false);
+                }
             } else {
                 setError("Please fill in all required fields correctly.");
             }
         } else if (step === 2) {
             if (validateStep2()) {
-                if (otp.join("") === DUMMY_OTP) {
-                    setShowSuccess(true);
-                } else {
-                    setError("Invalid OTP. Please enter the correct verification code.");
-                }
+                setLoading(true);
+                try {
+                    const otpCode = otp.join("");
+                    const result = await verifyOtp(mobileNumber, otpCode);
 
+                    // Store authentication token and user info
+                    localStorage.setItem('authToken', result.token);
+                    localStorage.setItem('authUser', JSON.stringify(result.user));
+
+                    setShowSuccess(true);
+                } catch (err: any) {
+                    setError(err.message || "Invalid OTP. Please try again.");
+                } finally {
+                    setLoading(false);
+                }
             } else {
                 setError("Please enter the complete OTP.");
             }
         }
     };
 
-    const handleResendOTP = () => {
-        setCountdown(30);
-        setCanResend(false);
-        setOtp(["", "", "", "", "", ""]);
+    const handleResendOTP = async () => {
+        setError("");
+        setLoading(true);
+        try {
+            await requestOtp(mobileNumber);
+            setCountdown(30);
+            setCanResend(false);
+            setOtp(["", "", "", "", "", ""]);
+        } catch (err: any) {
+            setError(err.message || "Failed to resend OTP. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleOtpChange = (index: number, value: string) => {
@@ -168,8 +227,9 @@ export default function RegisterPage() {
                                     </div>
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-900 mb-3">Registered successfully!</h2>
-                                <Link href="/login" className="w-full bg-[#F46300] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg inline-block">
-                                    Login Now
+                                <p className="text-gray-600 mb-6">Your account has been created. You can now apply for loans.</p>
+                                <Link href="/apply-now" className="w-full bg-[#F46300] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg inline-block text-center">
+                                    Apply for Loan
                                 </Link>
                             </div>
                         ) : (
@@ -201,6 +261,7 @@ export default function RegisterPage() {
                                                         }}
                                                         className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F46300] focus:border-transparent outline-none transition-all"
                                                         placeholder="Enter mobile number"
+                                                        disabled={loading}
                                                     />
                                                 </div>
                                             </div>
@@ -215,6 +276,7 @@ export default function RegisterPage() {
                                                         if (error) setError("");
                                                     }}
                                                     className="w-4 h-4 mt-1 text-[#F46300] border-gray-300 rounded focus:ring-[#F46300]"
+                                                    disabled={loading}
                                                 />
                                                 <label htmlFor="terms" className="text-xs text-gray-600">
                                                     By continuing, you agree to our <Link href="/privacy" className="text-[#F46300] hover:underline">privacy policies</Link> and <Link href="/terms" className="text-[#F46300] hover:underline">T&C</Link>. You also authorize us to <span className="text-[#F46300]">retrieve</span> & communicate with you via phone, e-mails, WhatsApp, etc.
@@ -243,13 +305,14 @@ export default function RegisterPage() {
                                                         }}
                                                         onKeyDown={(e) => handleOtpKeyDown(index, e)}
                                                         className="w-12 h-12 text-center text-xl font-semibold border-2 border-gray-300 rounded-lg focus:border-[#F46300] focus:ring-2 focus:ring-[#F46300] focus:outline-none transition-all"
+                                                        disabled={loading}
                                                     />
                                                 ))}
                                             </div>
 
                                             <div className="text-sm text-gray-600 mb-6">
                                                 {canResend ? (
-                                                    <button onClick={handleResendOTP} type="button" className="text-[#F46300] font-medium hover:underline">
+                                                    <button onClick={handleResendOTP} type="button" className="text-[#F46300] font-medium hover:underline" disabled={loading}>
                                                         Resend OTP
                                                     </button>
                                                 ) : (
@@ -271,8 +334,15 @@ export default function RegisterPage() {
                                     <button
                                         type="button"
                                         onClick={handleNext}
-                                        className="w-full bg-[#F46300] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg mt-6"
+                                        disabled={loading}
+                                        className="w-full bg-[#F46300] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
+                                        {loading && (
+                                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        )}
                                         {step === 1 ? "Get OTP" : "Verify OTP"}
                                     </button>
 
@@ -285,7 +355,7 @@ export default function RegisterPage() {
                                     )}
 
                                     {step === 2 && (
-                                        <button type="button" onClick={() => setStep(1)} className="w-full mt-2 text-gray-500 hover:text-gray-700 text-sm">
+                                        <button type="button" onClick={() => setStep(1)} className="w-full mt-2 text-gray-500 hover:text-gray-700 text-sm" disabled={loading}>
                                             Change Number
                                         </button>
                                     )}

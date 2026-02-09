@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
+// API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 // Helper function to truncate long filenames
 function truncateFileName(fileName: string, maxLength: number): string {
     if (fileName.length <= maxLength) return fileName;
@@ -16,7 +19,7 @@ function truncateFileName(fileName: string, maxLength: number): string {
     return `${truncatedName}...${extension}`;
 }
 
-function ApplyNowContent() {
+function ApplyNowContent(): React.JSX.Element {
     const searchParams = useSearchParams();
     const [step, setStep] = useState(1);
 
@@ -55,6 +58,12 @@ function ApplyNowContent() {
 
     // Success state
     const [showSuccess, setShowSuccess] = useState(false);
+
+    // API Integration states
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [authToken, setAuthToken] = useState("");
+    const [userId, setUserId] = useState("");
 
     // Initialize from URL params
     useEffect(() => {
@@ -154,33 +163,218 @@ function ApplyNowContent() {
         );
     };
 
-    const handleNext = () => {
+    // API Helper Functions
+    const requestOtp = async (phone: string) => {
+        const response = await fetch(`${API_BASE_URL}/api/auth/phone/request-otp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: `+91${phone}` })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to send OTP");
+        }
+
+        return response.json();
+    };
+
+    const verifyOtp = async (phone: string, code: string) => {
+        const response = await fetch(`${API_BASE_URL}/api/auth/phone/verify-otp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: `+91${phone}`, code })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Invalid OTP");
+        }
+
+        return response.json();
+    };
+
+    const uploadDocument = async (file: File, documentType: string, token: string) => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(`${API_BASE_URL}/api/document/upload/${documentType}`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Failed to upload ${documentType}`);
+        }
+
+        return response.json();
+    };
+
+    const uploadSelfie = async (file: File, token: string) => {
+        const formData = new FormData();
+        formData.append("selfie", file);
+
+        const response = await fetch(`${API_BASE_URL}/api/selfie/upload`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to upload selfie");
+        }
+
+        return response.json();
+    };
+
+    const submitLocation = async (latitude: number, longitude: number, token: string) => {
+        const response = await fetch(`${API_BASE_URL}/api/users/location`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ latitude, longitude })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to save location");
+        }
+
+        return response.json();
+    };
+
+    const submitKYC = async (token: string) => {
+        const kycData = {
+            companyName,
+            companyAddress,
+            monthlyIncome: parseInt(monthlySalary),
+            stability: jobStability,
+            currentAddress,
+            currentAddressType: addressType,
+            permanentAddress,
+            currentPostalCode: pinCode,
+            loanAmount: parseInt(loanAmount),
+            purpose: loanPurpose,
+            employmentType: "SALARIED"
+        };
+
+        const response = await fetch(`${API_BASE_URL}/api/kyc`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(kycData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to submit KYC");
+        }
+
+        return response.json();
+    };
+
+    const handleNext = async () => {
+        setError("");
+
         if (step === 1 && validateStep1()) {
-            setStep(2);
+            // Step 1 -> Step 2: Request OTP
+            setLoading(true);
+            try {
+                await requestOtp(mobileNumber);
+                setStep(2);
+            } catch (err: any) {
+                setError(err.message || "Failed to send OTP. Please try again.");
+            } finally {
+                setLoading(false);
+            }
         } else if (step === 1) {
-            alert("Please fill in all required fields before proceeding.");
+            setError("Please fill in all required fields before proceeding.");
         } else if (step === 2 && validateStep2()) {
-            // Reset countdown when moving to step 3
+            // Step 2 -> Step 3: Move to OTP verification
             setCountdown(30);
             setCanResend(false);
             setStep(3);
         } else if (step === 2) {
-            alert("Please fill in all required fields and agree to terms before proceeding.");
+            setError("Please fill in all required fields and agree to terms before proceeding.");
         } else if (step === 3 && validateStep3()) {
-            setStep(4);
+            // Step 3 -> Step 4: Verify OTP and authenticate user
+            setLoading(true);
+            try {
+                const otpCode = otp.join("");
+                const result = await verifyOtp(mobileNumber, otpCode);
+
+                // Store authentication token and user ID
+                setAuthToken(result.token);
+                setUserId(result.user.id);
+
+                setStep(4);
+            } catch (err: any) {
+                setError(err.message || "Invalid OTP. Please try again.");
+            } finally {
+                setLoading(false);
+            }
         } else if (step === 3) {
-            alert("Please enter the complete 6-digit OTP.");
+            setError("Please enter the complete 6-digit OTP.");
         } else if (step === 4 && validateStep4()) {
-            setShowSuccess(true);
+            // Step 4: Final submission - Upload documents, selfie, location, and KYC
+            setLoading(true);
+            try {
+                // 1. Upload selfie
+                if (photoFile) {
+                    await uploadSelfie(photoFile, authToken);
+                }
+
+                // 2. Submit location
+                if (location) {
+                    await submitLocation(location.latitude, location.longitude, authToken);
+                }
+
+                // 3. Upload all documents
+                if (addressProofFile) {
+                    await uploadDocument(addressProofFile, "ADDRESS_PROOF", authToken);
+                }
+                if (paySlipFile) {
+                    await uploadDocument(paySlipFile, "PAY_SLIP", authToken);
+                }
+                if (bankStatementFile) {
+                    await uploadDocument(bankStatementFile, "BANK_STATEMENT", authToken);
+                }
+
+                // 4. Submit KYC data
+                await submitKYC(authToken);
+
+                // Success!
+                setShowSuccess(true);
+            } catch (err: any) {
+                setError(err.message || "Failed to submit application. Please try again.");
+            } finally {
+                setLoading(false);
+            }
         } else if (step === 4) {
-            alert("Please upload your photo and enable location detection.");
+            setError("Please upload your photo and enable location detection.");
         }
     };
 
-    const handleResendOTP = () => {
-        setCountdown(30);
-        setCanResend(false);
-        setOtp(["", "", "", "", "", ""]);
+    const handleResendOTP = async () => {
+        setError("");
+        setLoading(true);
+        try {
+            await requestOtp(mobileNumber);
+            setCountdown(30);
+            setCanResend(false);
+            setOtp(["", "", "", "", "", ""]);
+        } catch (err: any) {
+            setError(err.message || "Failed to resend OTP. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleOtpChange = (index: number, value: string) => {
@@ -931,6 +1125,13 @@ function ApplyNowContent() {
                                                 </label>
                                             </div>
                                         </div>
+
+                                        {/* Error Message Display */}
+                                        {error && (
+                                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                                <p className="text-sm text-red-600">{error}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -941,6 +1142,13 @@ function ApplyNowContent() {
                                             <h3 className="text-2xl font-semibold text-gray-900">
                                                 Verify Aadhaar number
                                             </h3>
+
+                                            {/* Error Message Display */}
+                                            {error && (
+                                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                                    <p className="text-sm text-red-600">{error}</p>
+                                                </div>
+                                            )}
 
                                             <p className="text-gray-600">
                                                 OTP sent on registered mobile number linked with your Aadhaar
@@ -1079,6 +1287,13 @@ function ApplyNowContent() {
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Error Message Display */}
+                                        {error && (
+                                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                                <p className="text-sm text-red-600">{error}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -1087,9 +1302,20 @@ function ApplyNowContent() {
                                     <button
                                         onClick={handleNext}
                                         type="button"
-                                        className="w-full bg-[#F46300] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg"
+                                        disabled={loading}
+                                        className="w-full bg-[#F46300] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
-                                        {step === 4 ? "Submit application" : step === 3 ? "Verify OTP" : step === 2 ? "Get OTP" : "Next"}
+                                        {loading ? (
+                                            <>
+                                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Processing...
+                                            </>
+                                        ) : (
+                                            step === 4 ? "Submit application" : step === 3 ? "Verify OTP" : step === 2 ? "Get OTP" : "Next"
+                                        )}
                                     </button>
                                 </div>
                             </>
