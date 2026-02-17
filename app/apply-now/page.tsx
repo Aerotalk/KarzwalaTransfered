@@ -106,13 +106,13 @@ function ApplyNowContent(): React.JSX.Element {
         return (
             mobileNumber !== "" && mobileNumber.length === 10 &&
             loanAmount !== "" &&
-            loanPurpose !== "" && loanPurpose !== "Describe your purpose" &&
+            loanPurpose !== "" &&
             companyName !== "" &&
             companyAddress !== "" &&
             monthlySalary !== "" &&
-            jobStability !== "" && jobStability !== "Select" &&
+            jobStability !== "" &&
             currentAddress !== "" &&
-            addressType !== "" && addressType !== "Select" &&
+            addressType !== "" &&
             permanentAddress !== "" &&
             addressProofFile !== null &&
             pinCode !== ""
@@ -734,13 +734,15 @@ function ApplyNowContent(): React.JSX.Element {
                                                         onChange={(e) => setLoanPurpose(e.target.value)}
                                                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F46300] focus:border-transparent outline-none transition-all appearance-none bg-white"
                                                     >
-                                                        <option>Describe your purpose</option>
-                                                        <option>Personal expenses</option>
-                                                        <option>Wedding</option>
-                                                        <option>Travel</option>
-                                                        <option>Debt consolidation</option>
-                                                        <option>Business</option>
-                                                        <option>Other</option>
+                                                        <option value="">Describe your purpose</option>
+                                                        <option value="MEDICAL_EMERGENCY">Medical Emergency</option>
+                                                        <option value="EDUCATION">Education</option>
+                                                        <option value="HOME_RENOVATION">Home Renovation</option>
+                                                        <option value="DEBT_CONSOLIDATION">Debt Consolidation</option>
+                                                        <option value="WEDDING">Wedding</option>
+                                                        <option value="BUSINESS">Business</option>
+                                                        <option value="TRAVEL">Travel</option>
+                                                        <option value="OTHER">Other</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -810,10 +812,12 @@ function ApplyNowContent(): React.JSX.Element {
                                                         onChange={(e) => setJobStability(e.target.value)}
                                                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F46300] focus:border-transparent outline-none transition-all appearance-none bg-white"
                                                     >
-                                                        <option>Select</option>
-                                                        <option>Stable</option>
-                                                        <option>Somewhat stable</option>
-                                                        <option>Unstable</option>
+                                                        <option value="">Select</option>
+                                                        <option value="VERY_STABLE">Very Stable</option>
+                                                        <option value="STABLE">Stable</option>
+                                                        <option value="NEUTRAL">Neutral</option>
+                                                        <option value="SOMEWHAT_UNSTABLE">Somewhat Unstable</option>
+                                                        <option value="VERY_UNSTABLE">Very Unstable</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -847,11 +851,9 @@ function ApplyNowContent(): React.JSX.Element {
                                                         onChange={(e) => setAddressType(e.target.value)}
                                                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F46300] focus:border-transparent outline-none transition-all appearance-none bg-white"
                                                     >
-                                                        <option>Select</option>
-                                                        <option>Owned</option>
-                                                        <option>Rented</option>
-                                                        <option>Company provided</option>
-                                                        <option>Parental</option>
+                                                        <option value="">Select</option>
+                                                        <option value="OWNER_SELF_OR_FAMILY">Owned (Self or Family)</option>
+                                                        <option value="RENTED">Rented</option>
                                                     </select>
                                                 </div>
                                                 <div>
