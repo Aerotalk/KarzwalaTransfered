@@ -930,6 +930,13 @@ function ApplyNowContent(): React.JSX.Element {
                                                             onChange={(e) => {
                                                                 const file = e.target.files?.[0];
                                                                 if (file) {
+                                                                    const maxSize = 4 * 1024 * 1024; // 4MB
+                                                                    if (file.size > maxSize) {
+                                                                        setError("File size must be less than 4MB. Please choose a smaller file or compress it.");
+                                                                        e.target.value = "";
+                                                                        return;
+                                                                    }
+                                                                    setError("");
                                                                     setAddressProofFile(file);
                                                                 }
                                                             }}
@@ -1007,6 +1014,13 @@ function ApplyNowContent(): React.JSX.Element {
                                                             onChange={(e) => {
                                                                 const file = e.target.files?.[0];
                                                                 if (file) {
+                                                                    const maxSize = 4 * 1024 * 1024; // 4MB
+                                                                    if (file.size > maxSize) {
+                                                                        setError("File size must be less than 4MB. Please choose a smaller file or compress it.");
+                                                                        e.target.value = "";
+                                                                        return;
+                                                                    }
+                                                                    setError("");
                                                                     setPaySlipFile(file);
                                                                 }
                                                             }}
@@ -1053,6 +1067,13 @@ function ApplyNowContent(): React.JSX.Element {
                                                             onChange={(e) => {
                                                                 const file = e.target.files?.[0];
                                                                 if (file) {
+                                                                    const maxSize = 4 * 1024 * 1024; // 4MB
+                                                                    if (file.size > maxSize) {
+                                                                        setError("File size must be less than 4MB. Please choose a smaller file or compress it.");
+                                                                        e.target.value = "";
+                                                                        return;
+                                                                    }
+                                                                    setError("");
                                                                     setBankStatementFile(file);
                                                                 }
                                                             }}
@@ -1236,6 +1257,14 @@ function ApplyNowContent(): React.JSX.Element {
                                                     onChange={(e) => {
                                                         const file = e.target.files?.[0];
                                                         if (file) {
+                                                            // Check file size (4MB = 4 * 1024 * 1024 bytes)
+                                                            const maxSize = 4 * 1024 * 1024; // 4MB
+                                                            if (file.size > maxSize) {
+                                                                setError("Image size must be less than 4MB. Please choose a smaller image or compress it.");
+                                                                e.target.value = ""; // Clear the input
+                                                                return;
+                                                            }
+                                                            setError(""); // Clear any previous errors
                                                             setPhotoFile(file);
                                                         }
                                                     }}
