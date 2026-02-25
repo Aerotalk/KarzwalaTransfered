@@ -1,0 +1,281 @@
+﻿
+> karzwala@0.1.0 build
+> next build
+
+node.exe : [baseline-br
+owser-mapping] The 
+data in this module is 
+over two months old.  
+To ensure accurate 
+Baseline data, please 
+update: `npm i baseline
+-browser-mapping@latest
+ -D`
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : 
+NotSpecified    : 
+([baseline-brows.    
+..ping@latest -D`:S    
+tring) [], RemoteEx    
+ception
+    + 
+FullyQualifiedErr    
+orId : NativeComman    
+dError
+ 
+   Γû▓ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+[baseline-browser-mappi
+ng] The data in this 
+module is over two 
+months old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browser
+-mapping@latest -D`
+ Γ£ô Compiled successfully in 16.3s
+   Running TypeScript ...
+   Collecting page data using 11 workers ...
+[baseline-browser-mappi
+ng] The data in this 
+module is over two 
+months old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browser
+-mapping@latest -D`
+[baseline-browser-mappi
+ng] The data in this 
+module is over two 
+months old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browser
+-mapping@latest -D`
+[baseline-browser-mappi
+ng] The data in this 
+module is over two 
+months old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browser
+-mapping@latest -D`
+[baseline-browser-mappi
+ng] The data in this 
+module is over two 
+months old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browser
+-mapping@latest -D`
+[baseline-browser-mappi
+ng] The data in this 
+module is over two 
+months old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browser
+-mapping@latest -D`
+[baseline-browser-mappi
+ng] The data in this 
+module is over two 
+months old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browser
+-mapping@latest -D`
+[baseline-browser-mappi
+ng] The data in this 
+module is over two 
+months old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browser
+-mapping@latest -D`
+[baseline-browser-mappi
+ng] The data in this 
+module is over two 
+months old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browser
+-mapping@latest -D`
+[baseline-browser-mappi
+ng] The data in this 
+module is over two 
+months old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browser
+-mapping@latest -D`
+[baseline-browser-mappi
+ng] The data in this 
+module is over two 
+months old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browser
+-mapping@latest -D`
+[baseline-browser-mappi
+ng] The data in this 
+module is over two 
+months old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browser
+-mapping@latest -D`
+Error: Failed to 
+collect configuration 
+for /blog/[slug]
+    at ignore-listed 
+frames {
+  [cause]: Error: 
+Missing environment 
+variable: NEXT_PUBLIC_S
+ANITY_DATASET
+      at b0 (D:\Project
+\Karzwala2.0\Frontend\.
+next\server\chunks\ssr\
+_6fdcdf78._.js:13:31992
+)
+      at module 
+evaluation (D:\Project\
+Karzwala2.0\Frontend\.n
+ext\server\chunks\ssr\_
+6fdcdf78._.js:13:31742)
+      at 
+instantiateModule (D:\P
+roject\Karzwala2.0\Fron
+tend\.next\server\chunk
+s\ssr\[turbopack]_runti
+me.js:715:9)
+      at getOrInstantia
+teModuleFromParent (D:\
+Project\Karzwala2.0\Fro
+ntend\.next\server\chun
+ks\ssr\[turbopack]_runt
+ime.js:738:12)
+      at 
+Context.esmImport [as 
+i] (D:\Project\Karzwala
+2.0\Frontend\.next\serv
+er\chunks\ssr\[turbopac
+k]_runtime.js:228:20)
+      at module 
+evaluation (D:\Project\
+Karzwala2.0\Frontend\.n
+ext\server\chunks\ssr\a
+pp_blog_[slug]_page_tsx
+_50498316._.js:1:91)
+      at 
+instantiateModule (D:\P
+roject\Karzwala2.0\Fron
+tend\.next\server\chunk
+s\ssr\[turbopack]_runti
+me.js:715:9)
+      at getOrInstantia
+teModuleFromParent (D:\
+Project\Karzwala2.0\Fro
+ntend\.next\server\chun
+ks\ssr\[turbopack]_runt
+ime.js:738:12)
+      at 
+Context.esmImport [as 
+i] (D:\Project\Karzwala
+2.0\Frontend\.next\serv
+er\chunks\ssr\[turbopac
+k]_runtime.js:228:20)
+      at module 
+evaluation (D:\Project\
+Karzwala2.0\Frontend\.n
+ext\server\chunks\ssr\_
+0ec352b1._.js:1:34)
+}
+Error: Failed to 
+collect configuration 
+for /blog
+    at ignore-listed 
+frames {
+  [cause]: Error: 
+Missing environment 
+variable: NEXT_PUBLIC_S
+ANITY_DATASET
+      at b0 (D:\Project
+\Karzwala2.0\Frontend\.
+next\server\chunks\ssr\
+_6fdcdf78._.js:13:31992
+)
+      at module 
+evaluation (D:\Project\
+Karzwala2.0\Frontend\.n
+ext\server\chunks\ssr\_
+6fdcdf78._.js:13:31742)
+      at 
+instantiateModule (D:\P
+roject\Karzwala2.0\Fron
+tend\.next\server\chunk
+s\ssr\[turbopack]_runti
+me.js:715:9)
+      at getOrInstantia
+teModuleFromParent (D:\
+Project\Karzwala2.0\Fro
+ntend\.next\server\chun
+ks\ssr\[turbopack]_runt
+ime.js:738:12)
+      at 
+Context.esmImport [as 
+i] (D:\Project\Karzwala
+2.0\Frontend\.next\serv
+er\chunks\ssr\[turbopac
+k]_runtime.js:228:20)
+      at module 
+evaluation (D:\Project\
+Karzwala2.0\Frontend\.n
+ext\server\chunks\ssr\[
+root-of-the-server]__0c
+8a55f6._.js:3:1846)
+      at 
+instantiateModule (D:\P
+roject\Karzwala2.0\Fron
+tend\.next\server\chunk
+s\ssr\[turbopack]_runti
+me.js:715:9)
+      at getOrInstantia
+teModuleFromParent (D:\
+Project\Karzwala2.0\Fro
+ntend\.next\server\chun
+ks\ssr\[turbopack]_runt
+ime.js:738:12)
+      at 
+Context.esmImport [as 
+i] (D:\Project\Karzwala
+2.0\Frontend\.next\serv
+er\chunks\ssr\[turbopac
+k]_runtime.js:228:20)
+      at module 
+evaluation (D:\Project\
+Karzwala2.0\Frontend\.n
+ext\server\chunks\ssr\_
+f41be247._.js:1:34)
+}
+
+> Build error occurred
+Error: Failed to 
+collect page data for 
+/blog/[slug]
+    at ignore-listed 
+frames {
+  type: 'Error'
+}
