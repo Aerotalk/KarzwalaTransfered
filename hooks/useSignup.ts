@@ -13,7 +13,9 @@ interface VerifyOtpPayload {
 interface RegisterProfilePayload {
     name: string;
     dob: string;
+    gender?: string;
     email?: string;
+    panNumber?: string;
 }
 
 interface KycPayload {

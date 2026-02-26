@@ -3,11 +3,25 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useRef } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Navbar() {
   const [hoveredDropdown, setHoveredDropdown] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { isLoggedIn, isPartnerLoggedIn, partnerType, dashboardPath, userInitials, logout, partnerLogout } = useAuth();
+
+  const isAnyLoggedIn = isLoggedIn || isPartnerLoggedIn;
+
+  const getDashboardLabel = () => {
+    if (isPartnerLoggedIn) {
+      if (partnerType === "AFFILIATE") return "Affiliate Dashboard";
+      if (partnerType === "DSA") return "DSA Dashboard";
+      if (partnerType === "BC") return "BC Dashboard";
+      return "Partner Dashboard";
+    }
+    return "My Dashboard";
+  };
 
   const navItems = [
     {
@@ -56,7 +70,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50">
-      {/* Top Bar - Full Width White with Orange Text */}
+      {/* Top Bar */}
       <div className="bg-white text-orange-500 text-sm w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-2">
           <div className="flex items-center gap-2">
@@ -66,21 +80,13 @@ export default function Navbar() {
             <span className="hidden sm:inline text-orange-500">+91 9876543210</span>
           </div>
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/investors-relation" className="text-orange-500 hover:text-orange-600 transition-colors">
-              Investors relation
-            </Link>
+            <Link href="/investors-relation" className="text-orange-500 hover:text-orange-600 transition-colors">Investors relation</Link>
             <span className="text-gray-300">|</span>
-            <Link href="/track-loan" className="text-orange-500 hover:text-orange-600 transition-colors">
-              Track loan
-            </Link>
+            <Link href="/track-loan" className="text-orange-500 hover:text-orange-600 transition-colors">Track loan</Link>
             <span className="text-gray-300">|</span>
-            <Link href="/enquire-now" className="text-orange-500 hover:text-orange-600 transition-colors">
-              Enquire now
-            </Link>
+            <Link href="/enquire-now" className="text-orange-500 hover:text-orange-600 transition-colors">Enquire now</Link>
             <span className="text-gray-300">|</span>
-            <Link href="/career" className="text-orange-500 hover:text-orange-600 transition-colors">
-              Career
-            </Link>
+            <Link href="/career" className="text-orange-500 hover:text-orange-600 transition-colors">Career</Link>
           </div>
         </div>
       </div>
@@ -88,7 +94,7 @@ export default function Navbar() {
       {/* Main Header */}
       <div className="bg-white -mt-px">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-0">
-          {/* Logo - White Background */}
+          {/* Logo */}
           <Link href="/" className="flex items-center gap-3 pr-6 z-10 relative">
             <Image
               src="/karzwala-logo.png"
@@ -99,25 +105,17 @@ export default function Navbar() {
             />
           </Link>
 
-          {/* Orange Navigation Section - Rounded Bottom Left */}
+          {/* Orange Navigation Section */}
           <div className="flex-1 bg-orange-500 text-white rounded-bl-[2rem] px-8 py-2 flex items-center justify-between -ml-6">
             {/* Navigation */}
             <nav className="hidden lg:flex items-center gap-3 flex-nowrap whitespace-nowrap">
               {navItems.map((item) => {
                 const handleMouseEnter = () => {
-                  if (timeoutRef.current) {
-                    clearTimeout(timeoutRef.current);
-                    timeoutRef.current = null;
-                  }
-                  if (item.hasDropdown) {
-                    setHoveredDropdown(item.label);
-                  }
+                  if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
+                  if (item.hasDropdown) setHoveredDropdown(item.label);
                 };
-
                 const handleMouseLeave = () => {
-                  timeoutRef.current = setTimeout(() => {
-                    setHoveredDropdown(null);
-                  }, 200); // 200ms delay before closing
+                  timeoutRef.current = setTimeout(() => setHoveredDropdown(null), 200);
                 };
 
                 return (
@@ -134,18 +132,14 @@ export default function Navbar() {
                       {item.label}
                       {item.hasDropdown && (
                         <svg
-                          className={`w-4 h-4 transition-transform flex-shrink-0 ${hoveredDropdown === item.label ? "rotate-180" : ""
-                            }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                          className={`w-4 h-4 transition-transform flex-shrink-0 ${hoveredDropdown === item.label ? "rotate-180" : ""}`}
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24"
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       )}
                     </Link>
 
-                    {/* Dropdown Menu */}
                     {item.hasDropdown && hoveredDropdown === item.label && (
                       <div
                         className="absolute left-0 top-full pt-2 bg-transparent"
@@ -154,10 +148,7 @@ export default function Navbar() {
                       >
                         <div className="bg-gray-100 shadow-xl rounded-xl overflow-hidden border border-gray-200">
                           <div className="p-3">
-                            <div className={`grid gap-2 ${item.label === "Personal loan" ? "grid-cols-3 w-[600px]" :
-                              item.label === "Loan calculators" ? "grid-cols-3 w-[500px]" :
-                                "grid-cols-2 w-[400px]"
-                              }`}>
+                            <div className={`grid gap-2 ${item.label === "Personal loan" ? "grid-cols-3 w-[600px]" : item.label === "Loan calculators" ? "grid-cols-3 w-[500px]" : "grid-cols-2 w-[400px]"}`}>
                               {item.dropdownItems?.map((dropdownItem) => (
                                 <Link
                                   key={dropdownItem.label}
@@ -166,12 +157,7 @@ export default function Navbar() {
                                 >
                                   <span className="text-sm font-medium text-gray-700">{dropdownItem.label}</span>
                                   <div className="flex-shrink-0 w-4 h-4 rounded-full border border-orange-500 flex items-center justify-center">
-                                    <svg
-                                      className="w-2.5 h-2.5 text-orange-500"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
+                                    <svg className="w-2.5 h-2.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                     </svg>
                                   </div>
@@ -189,18 +175,52 @@ export default function Navbar() {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-3">
-              <Link
-                href="/login"
-                className="hidden sm:block px-5 py-2 text-sm font-semibold bg-transparent text-white border border-white rounded-lg hover:bg-white/10 transition-colors"
-              >
-                Login
-              </Link>
-              <Link
-                href="/apply-now"
-                className="hidden sm:block px-5 py-2 text-sm font-semibold bg-white text-orange-500 rounded-lg hover:bg-orange-50 transition-colors"
-              >
-                Apply now
-              </Link>
+              {isAnyLoggedIn ? (
+                <>
+                  {/* View Dashboard Button */}
+                  <Link
+                    href={dashboardPath}
+                    className="hidden sm:flex items-center gap-2 px-5 py-2 text-sm font-semibold bg-white text-orange-500 rounded-lg hover:bg-orange-50 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    View Dashboard
+                  </Link>
+                  {/* Apply Now (only for user, not partner) */}
+                  {isLoggedIn && !isPartnerLoggedIn && (
+                    <Link
+                      href="/apply-now"
+                      className="hidden sm:block px-5 py-2 text-sm font-semibold bg-transparent text-white border border-white rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      Apply now
+                    </Link>
+                  )}
+                  {/* Logout */}
+                  <button
+                    onClick={isPartnerLoggedIn ? partnerLogout : logout}
+                    className="hidden sm:block px-4 py-2 text-sm font-semibold text-white/70 hover:text-white transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="hidden sm:block px-5 py-2 text-sm font-semibold bg-transparent text-white border border-white rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/apply-now"
+                    className="hidden sm:block px-5 py-2 text-sm font-semibold bg-white text-orange-500 rounded-lg hover:bg-orange-50 transition-colors"
+                  >
+                    Apply now
+                  </Link>
+                </>
+              )}
+
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -248,20 +268,40 @@ export default function Navbar() {
                 </div>
               ))}
               <div className="pt-4 space-y-2 border-t border-orange-400">
-                <Link
-                  href="/login"
-                  className="block px-3 py-2 text-sm font-semibold bg-transparent text-white border border-white rounded-lg text-center"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/apply-now"
-                  className="block px-3 py-2 text-sm font-semibold bg-white text-orange-500 rounded-lg text-center"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Apply now
-                </Link>
+                {isAnyLoggedIn ? (
+                  <>
+                    <Link
+                      href={dashboardPath}
+                      className="block px-3 py-2 text-sm font-semibold bg-white text-orange-500 rounded-lg text-center"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      View Dashboard
+                    </Link>
+                    <button
+                      onClick={() => { setMobileMenuOpen(false); isPartnerLoggedIn ? partnerLogout() : logout(); }}
+                      className="block w-full px-3 py-2 text-sm font-semibold bg-transparent text-white border border-white rounded-lg text-center"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="block px-3 py-2 text-sm font-semibold bg-transparent text-white border border-white rounded-lg text-center"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/apply-now"
+                      className="block px-3 py-2 text-sm font-semibold bg-white text-orange-500 rounded-lg text-center"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Apply now
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -58,12 +58,36 @@ function ApplyNowContent(): React.JSX.Element {
 
     // Success state
     const [showSuccess, setShowSuccess] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
     // API Integration states
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [authToken, setAuthToken] = useState("");
     const [userId, setUserId] = useState("");
+
+    // Auth gate — verify authentication local state
+    const router = useRouter();
+    useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            setIsAuthenticated(false);
+            setStep(0);
+            return;
+        }
+        setIsAuthenticated(true);
+        // Pre-fill auth state for subsequent API calls
+        setAuthToken(token);
+        const userStr = localStorage.getItem('authUser');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                const phone = user?.phone?.replace('+91', '') || user?.mobileNumber || '';
+                if (phone) setMobileNumber(phone);
+                if (user?.id) setUserId(user.id);
+            } catch { /* ignore */ }
+        }
+    }, [router]);
 
     // Initialize from URL params
     useEffect(() => {
@@ -635,6 +659,35 @@ function ApplyNowContent(): React.JSX.Element {
                                 <h2 className="text-2xl font-bold text-gray-900 mb-3">Application Submitted Successfully!</h2>
                                 <p className="text-gray-600 mb-8">Your loan application has been received. We'll review it and get back to you shortly.</p>
                                 <button onClick={() => window.location.href = '/'} className="w-full bg-[#F46300] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#E55A00] transition-colors shadow-md hover:shadow-lg">Back to Home</button>
+                            </div>
+                        ) : isAuthenticated === false ? (
+                            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center animate-fadeIn">
+                                <div className="mb-6 flex justify-center bg-orange-50 p-6 rounded-full">
+                                    <svg className="w-16 h-16 text-[#F46300]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-3">Authentication Required</h2>
+                                <p className="text-gray-600 mb-10 max-w-md mx-auto">Please log in or create a new account to quickly apply for your loan with Karzwala.</p>
+
+                                <div className="flex flex-col w-full max-w-sm gap-4">
+                                    <button
+                                        onClick={() => window.location.href = '/login?redirect=/apply-now'}
+                                        className="w-full bg-[#F46300] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#D45600] active:scale-[0.98] transition-all shadow-md hover:shadow-lg"
+                                    >
+                                        Log In
+                                    </button>
+                                    <button
+                                        onClick={() => window.location.href = '/signup?redirect=/apply-now'}
+                                        className="w-full bg-white text-[#F46300] font-bold py-3.5 px-6 rounded-xl border-2 border-[#F46300] hover:bg-orange-50 active:scale-[0.98] transition-all"
+                                    >
+                                        Register Now
+                                    </button>
+                                </div>
+                            </div>
+                        ) : isAuthenticated === null ? (
+                            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                                <div className="w-12 h-12 border-4 border-orange-200 border-t-[#F46300] rounded-full animate-spin"></div>
                             </div>
                         ) : (
                             <>

@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React from "react";
+import { useAffiliate } from "@/hooks/useAffiliate";
 import { apiClient } from "@/lib/api";
+import { toast } from "sonner";
 
 import {
     LayoutDashboard,
@@ -21,71 +22,96 @@ import {
     Globe,
     LogOut
 } from "lucide-react";
-import { useAffiliate } from "@/hooks/useAffiliate";
+
+import { useRouter } from "next/navigation";
 
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-function DSADashboardContent() {
-    const { getLinkWithRef } = useAffiliate();
-    const router = useRouter();
+function BCDashboardContent() {
+    const { affiliateRef, getLinkWithRef } = useAffiliate();
     const [activeTab, setActiveTab] = React.useState("Dashboard");
-    const [loading, setLoading] = React.useState(true);
-    const [dashboardData, setDashboardData] = React.useState<any>(null);
-    const [referralLink, setReferralLink] = React.useState('');
-    const [profileData, setProfileData] = React.useState<any>(null);
-    const [earningsData, setEarningsData] = React.useState<any[]>([]); // NEW STATE
+    const router = useRouter();
+
+    const handleLogout = () => {
+        localStorage.removeItem('partnerAuthToken');
+        localStorage.removeItem('partnerData');
+        router.push(getLinkWithRef("/"));
+    };
 
     const [editingFields, setEditingFields] = React.useState<Record<string, boolean>>({});
     const [selectedDate, setSelectedDate] = React.useState({ month: "October", year: "2025", isLifetime: false });
     const [tempDate, setTempDate] = React.useState({ month: "October", year: "2025", isLifetime: false });
     const [isDateMenuOpen, setIsDateMenuOpen] = React.useState(false);
-    const [isUpdating, setIsUpdating] = React.useState(false);
+
+    const [referralLink, setReferralLink] = React.useState<string | null>(null);
 
     const inputRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
 
-    const handleLogout = () => {
-        localStorage.removeItem('partnerAuthToken');
-        localStorage.removeItem('partnerData');
-        window.location.replace('/');
-    };
+    // Fetch Referral Link on Mount
+    React.useEffect(() => {
+        const fetchLink = async () => {
+            try {
+                const res = await apiClient.getPartnerReferralLink();
+                if (res.link) {
+                    setReferralLink(res.link);
+                }
+            } catch (err) {
+                console.error("Failed to fetch referral link", err);
+            }
+        };
+        fetchLink();
+    }, []);
+
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const years = ["2023", "2024", "2025"];
+
+    const [loading, setLoading] = React.useState(true);
+    const [dashboardData, setDashboardData] = React.useState<any>(null);
+    const [profileData, setProfileData] = React.useState<any>(null);
+    const [earningsData, setEarningsData] = React.useState<any[]>([]);
 
     // Fetch dashboard data on mount
-    useEffect(() => {
+    React.useEffect(() => {
         const fetchDashboardData = async () => {
             try {
                 // Check authentication
                 const partnerToken = localStorage.getItem('partnerAuthToken');
                 if (!partnerToken) {
-                    window.location.href = '/login-agent';
+                    toast.error("Please login to access dashboard");
+                    router.push('/login-agent');
                     return;
                 }
 
                 // Fetch dashboard stats
+                console.log("Fetching dashboard stats...");
                 const dashboardResponse = await apiClient.getPartnerDashboard();
                 setDashboardData(dashboardResponse);
 
                 // Fetch referral link
+                console.log("Fetching referral link...");
                 const linkResponse = await apiClient.getPartnerReferralLink();
-                setReferralLink(linkResponse.link || '');
-
-                // Fetch earnings
-                const earningsRes = await apiClient.getPartnerEarnings();
-                setEarningsData(earningsRes || []);
+                if (linkResponse.link) {
+                    setReferralLink(linkResponse.link);
+                }
 
                 // Fetch profile data
+                console.log("Fetching profile...");
                 const profileResponse = await apiClient.getPartnerProfile();
                 setProfileData(profileResponse);
 
+                // Fetch earnings
+                console.log("Fetching earnings...");
+                const earningsResponse = await apiClient.getPartnerEarnings();
+                setEarningsData(earningsResponse || []);
+
             } catch (error: any) {
                 console.error('Failed to fetch dashboard data:', error);
-                // If unauthorized, redirect to login
                 if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
                     localStorage.removeItem('partnerAuthToken');
-                    localStorage.removeItem('partnerData');
-                    window.location.href = '/login-agent';
+                    router.push('/login-agent');
                 }
             } finally {
                 setLoading(false);
@@ -94,9 +120,6 @@ function DSADashboardContent() {
 
         fetchDashboardData();
     }, [router]);
-
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const years = ["2023", "2024", "2025"];
 
     const handleApplyFilter = () => {
         setSelectedDate(tempDate);
@@ -126,48 +149,14 @@ function DSADashboardContent() {
         }, 150);
     };
 
-    const handleProfileUpdate = async () => {
-        setIsUpdating(true);
-        try {
-            const getRefVal = (id: string) => (inputRefs.current[id]?.value || "").trim();
-
-            const updatedData = {
-                address: getRefVal('address'),
-                city: getRefVal('city'),
-                state: getRefVal('state'),
-                pincode: getRefVal('pincode'),
-            };
-
-            const result = await apiClient.updatePartnerProfile(updatedData);
-
-            setProfileData((prev: any) => ({
-                ...prev,
-                ...updatedData
-            }));
-
-            // Clear editing states so UI locks back up
-            setEditingFields({});
-
-            // Assuming you have sonner toast configured or you could use standard alert
-            alert("Profile updated successfully!");
-
-        } catch (error: any) {
-            console.error("Failed to update profile", error);
-            alert(error.message || "Failed to update profile");
-        } finally {
-            setIsUpdating(false);
-        }
-    };
-
     const sidebarItems = [
         { name: "Dashboard", icon: <LayoutDashboard size={20} /> },
-        { name: "Agent earnings", icon: <IndianRupee size={20} /> },
+        { name: "Consultant earnings", icon: <IndianRupee size={20} /> },
         { name: "Track loan", icon: <FileSearch size={20} /> },
         { name: "Profile", icon: <UserCircle size={20} /> },
         { name: "Support", icon: <Headphones size={20} /> },
     ];
 
-    // Use real data from backend
     const stats = [
         {
             label: "Total referrals",
@@ -183,13 +172,13 @@ function DSADashboardContent() {
         },
         {
             label: "Earnings",
-            value: loading ? "..." : `₹${(earningsData.length * 1000).toLocaleString()}`,
+            value: loading ? "..." : "₹0", // TODO: Add earnings calculation
             icon: <IndianRupee size={20} className="text-green-500" />,
             bgColor: "bg-green-50"
         },
     ];
 
-    // const earnings = [ ... ] (Removed hardcoded)
+
 
     const renderDashboard = () => (
         <div className="space-y-12">
@@ -305,16 +294,20 @@ function DSADashboardContent() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-white p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 space-y-4">
-                    <p className="text-[15px] font-medium text-gray-500">My agent referral link</p>
+                    <p className="text-[15px] font-medium text-gray-500">My consultant referral link</p>
                     <div className="flex items-center justify-between bg-orange-50/30 p-4 rounded-2xl border border-orange-50/50">
                         <span className="text-[14px] text-gray-600 truncate mr-4">
-                            {loading ? 'Loading...' : (referralLink || 'No link available')}
+                            {referralLink || (typeof window !== 'undefined' ? `${window.location.origin}/signup?ref=${affiliateRef || 'YOUR_CODE'}` : 'loading...')}
                         </span>
                         <button
                             className="text-gray-400 hover:text-orange-500 transition-colors"
                             onClick={() => {
-                                if (referralLink && typeof window !== 'undefined') {
+                                if (referralLink) {
                                     navigator.clipboard.writeText(referralLink);
+                                    toast.success("Link copied to clipboard!");
+                                } else if (typeof window !== 'undefined') {
+                                    navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${affiliateRef || 'YOUR_CODE'}`);
+                                    toast.success("Link copied!");
                                 }
                             }}
                         >
@@ -334,7 +327,7 @@ function DSADashboardContent() {
 
     const renderEarnings = () => (
         <div className="space-y-10">
-            <h2 className="text-[28px] font-bold text-[#F46300]">Agent Earnings</h2>
+            <h2 className="text-[28px] font-bold text-[#F46300]">Consultant Earnings</h2>
 
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-[0_15px_50px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
                 <div className="overflow-x-auto">
@@ -474,12 +467,8 @@ function DSADashboardContent() {
                         </div>
                     ))}
                 </div>
-                <button
-                    onClick={handleProfileUpdate}
-                    disabled={isUpdating}
-                    className="bg-[#F46300] text-white px-8 py-3.5 rounded-xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 text-[15px] flex items-center justify-center gap-2"
-                >
-                    {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : "Update now"}
+                <button className="bg-[#F46300] text-white px-8 py-3.5 rounded-xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 text-[15px]">
+                    Update now
                 </button>
             </section>
         </div>
@@ -530,9 +519,9 @@ function DSADashboardContent() {
 
     return (
         <div className="min-h-screen bg-white pt-40 pb-24 px-4 md:px-12 lg:px-24">
-            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-16 relative">
+            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-16">
                 {/* Sidebar */}
-                <aside className="w-full lg:w-72 lg:sticky lg:top-36 h-fit self-start overflow-y-auto custom-scrollbar max-h-[calc(100vh-140px)] z-20">
+                <aside className="w-full lg:w-72 lg:sticky lg:top-40 h-fit self-start">
                     <div className="bg-white rounded-[2rem] p-4 shadow-[0_8px_40px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-col h-fit space-y-2">
                         <nav className="space-y-1">
                             {sidebarItems.map((item) => (
@@ -567,7 +556,7 @@ function DSADashboardContent() {
                 {/* Main Content */}
                 <main className="flex-1">
                     {activeTab === "Dashboard" && renderDashboard()}
-                    {activeTab === "Agent earnings" && renderEarnings()}
+                    {activeTab === "Consultant earnings" && renderEarnings()}
                     {activeTab === "Track loan" && renderTrackLoan()}
                     {activeTab === "Profile" && renderProfile()}
                     {activeTab === "Support" && renderSupport()}
@@ -577,14 +566,14 @@ function DSADashboardContent() {
     );
 }
 
-export default function DSADashboardPage() {
+export default function BCDashboardPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
                 <Loader2 className="w-10 h-10 text-orange-600 animate-spin" />
             </div>
         }>
-            <DSADashboardContent />
+            <BCDashboardContent />
         </Suspense>
     );
 }

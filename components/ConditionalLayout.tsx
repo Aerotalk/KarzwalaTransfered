@@ -10,7 +10,9 @@ export default function ConditionalLayout({
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
-    const hideNavAndFooter = pathname.startsWith("/apply-now") || pathname.startsWith("/login") || pathname.startsWith("/register");
+    const hideNavAndFooter = pathname.startsWith("/apply-now") ||
+        pathname.startsWith("/login") ||
+        pathname.startsWith("/register");
 
     return (
         <>

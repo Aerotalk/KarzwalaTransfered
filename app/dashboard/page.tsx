@@ -21,7 +21,8 @@ import {
     ArrowUpRight,
     Mail,
     MessageCircle,
-    Loader2
+    Loader2,
+    ChevronDown
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -45,12 +46,12 @@ function DashboardContent() {
 
     // Initial empty states
     const [personalDetails, setPersonalDetails] = React.useState([
-        { label: "First name as per PAN", value: "Loading...", locked: true },
-        { label: "Last name", value: "Loading...", locked: true },
-        { label: "Date of birth as per PAN", value: "Loading...", locked: true },
-        { label: "Mobile number", value: "Loading...", locked: true },
-        { label: "Gender", value: "Loading...", locked: true },
-        { label: "PAN", value: "Loading...", locked: true },
+        { id: "pd_1", label: "First name as per PAN", value: "Loading...", locked: false },
+        { id: "pd_2", label: "Last name", value: "Loading...", locked: false },
+        { id: "pd_3", label: "Date of birth (YYYY-MM-DD)", value: "Loading...", locked: false },
+        { id: "pd_4", label: "Mobile number", value: "Loading...", locked: true },
+        { id: "pd_5", label: "Gender (MALE/FEMALE/OTHER)", value: "Loading...", locked: false },
+        { id: "pd_6", label: "PAN", value: "Loading...", locked: false },
     ]);
 
     const [employmentData, setEmploymentData] = React.useState([
@@ -66,35 +67,65 @@ function DashboardContent() {
         { id: "addr_3", label: "Permanent address", value: "Not added" },
     ]);
 
-    // Set Mock Data on mount
+    // Fetch data on mount
     React.useEffect(() => {
-        // Simulate loading
-        setTimeout(() => {
-            // Mock Data
-            setPersonalDetails([
-                { label: "First name as per PAN", value: "Rahul", locked: true },
-                { label: "Last name", value: "Sharma", locked: true },
-                { label: "Date of birth as per PAN", value: "12/05/1990", locked: true },
-                { label: "Mobile number", value: "+91 9876543210", locked: true },
-                { label: "Gender", value: "Male", locked: true },
-                { label: "PAN", value: "ABCDE1234F", locked: true },
-            ]);
+        async function fetchData() {
+            try {
+                // Check authentication
+                const userToken = localStorage.getItem('authToken');
+                if (!userToken) {
+                    window.location.href = '/login?redirect=/dashboard';
+                    return;
+                }
 
-            setEmploymentData([
-                { id: "emp_1", label: "Company name", value: "Tech Solutions Pvt Ltd" },
-                { id: "emp_2", label: "Company address", value: "Sector 62, Noida" },
-                { id: "emp_3", label: "Monthly income", value: "₹45,000" },
-                { id: "emp_4", label: "Stability in current job", value: "3 Years" },
-            ]);
+                // Import apiClient dynamically or assume it's imported at top (Added import below)
+                const { apiClient } = await import("@/lib/api");
+                const response = await apiClient.getCompleteProfile();
 
-            setAddressData([
-                { id: "addr_1", label: "Current address with landmark", value: "B-12, Green Park, New Delhi" },
-                { id: "addr_2", label: "Current address type", value: "Rented" },
-                { id: "addr_3", label: "Permanent address", value: "B-12, Green Park, New Delhi" },
-            ]);
+                if (response && response.profile) {
+                    const p = response.profile as any;
 
-            setIsLoading(false);
-        }, 1000);
+                    // Split name into first and last (simple logic)
+                    const fullName = p.name || "";
+                    const nameParts = fullName.split(" ");
+                    const firstName = nameParts[0] || "-";
+                    const lastName = nameParts.slice(1).join(" ") || "-";
+                    // Display DOB as YYYY-MM-DD for easier saving
+                    const dob = p.dob ? new Date(p.dob).toISOString().split('T')[0] : "-";
+
+                    setPersonalDetails([
+                        { id: "pd_1", label: "First name as per PAN", value: firstName, locked: false },
+                        { id: "pd_2", label: "Last name", value: lastName, locked: false },
+                        { id: "pd_3", label: "Date of birth (YYYY-MM-DD)", value: dob, locked: false },
+                        { id: "pd_4", label: "Mobile number", value: p.phone || "-", locked: true },
+                        { id: "pd_5", label: "Gender (MALE/FEMALE/OTHER)", value: p.gender || "-", locked: false },
+                        { id: "pd_6", label: "PAN", value: p.panVerification?.panNumber || "-", locked: false },
+                    ]);
+
+                    if (p.employment) {
+                        setEmploymentData([
+                            { id: "emp_1", label: "Company name", value: p.employment.employerName || "-" },
+                            { id: "emp_2", label: "Company address", value: p.employment.companyAddress || "-" },
+                            { id: "emp_3", label: "Monthly income", value: p.employment.monthlyIncome ? `₹${p.employment.monthlyIncome}` : "-" },
+                            { id: "emp_4", label: "Stability in current job", value: p.employment.stability || "-" },
+                        ]);
+                    }
+
+                    if (p.address) {
+                        setAddressData([
+                            { id: "addr_1", label: "Current address with landmark", value: p.address.currentAddress || "-" },
+                            { id: "addr_2", label: "Current address type", value: p.address.currentAddressType || "-" },
+                            { id: "addr_3", label: "Permanent address", value: p.address.permanentAddress || "-" },
+                        ]);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch dashboard data:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        fetchData();
     }, []);
 
     const loanHistory = [
@@ -131,28 +162,86 @@ function DashboardContent() {
         }, 150);
     };
 
-    const handleInputChange = (id: string, newValue: string, type: 'employment' | 'address') => {
+    const handleInputChange = (id: string, newValue: string, type: 'employment' | 'address' | 'personal') => {
         if (type === 'employment') {
             setEmploymentData(prev => prev.map(item => item.id === id ? { ...item, value: newValue } : item));
-        } else {
+        } else if (type === 'address') {
             setAddressData(prev => prev.map(item => item.id === id ? { ...item, value: newValue } : item));
+        } else if (type === 'personal') {
+            setPersonalDetails(prev => prev.map(item => item.id === id ? { ...item, value: newValue } : item));
+        }
+    };
+
+    const handleUpdatePersonalDetails = async () => {
+        setIsLoading(true);
+        try {
+            const { apiClient } = await import("@/lib/api");
+
+            const firstName = personalDetails.find(i => i.id === "pd_1")?.value || "";
+            const lastName = personalDetails.find(i => i.id === "pd_2")?.value || "";
+            const fullName = lastName !== "-" ? `${firstName} ${lastName}`.trim() : firstName;
+
+            const data = {
+                name: fullName,
+                dob: personalDetails.find(i => i.id === "pd_3")?.value || "",
+                gender: personalDetails.find(i => i.id === "pd_5")?.value || "",
+                panNumber: personalDetails.find(i => i.id === "pd_6")?.value || ""
+            };
+
+            // Using the standard logic from API Class to save profile data securely
+            await apiClient.registerUser(data);
+            alert("Personal details updated successfully!");
+        } catch (error) {
+            console.error("Failed to update personal details:", error);
+            alert("Failed to update details. Please ensure date format is YYYY-MM-DD and Gender is MALE/FEMALE/OTHER.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const handleUpdateEmployment = async () => {
         setIsLoading(true);
-        setTimeout(() => {
-            alert("Employment details updated successfully! (Mock)");
+        try {
+            const { apiClient } = await import("@/lib/api");
+
+            // Map array back to object
+            const data = {
+                companyName: employmentData.find(i => i.id === "emp_1")?.value || "",
+                companyAddress: employmentData.find(i => i.id === "emp_2")?.value || "",
+                monthlyIncome: parseFloat((employmentData.find(i => i.id === "emp_3")?.value || "0").replace(/[^0-9.]/g, "")),
+                stability: employmentData.find(i => i.id === "emp_4")?.value || "",
+            };
+
+            await apiClient.updateEmployment(data);
+            alert("Employment details updated successfully!");
+        } catch (error) {
+            console.error("Failed to update employment:", error);
+            alert("Failed to update details. Please try again.");
+        } finally {
             setIsLoading(false);
-        }, 1000);
+        }
     };
 
     const handleUpdateAddress = async () => {
         setIsLoading(true);
-        setTimeout(() => {
-            alert("Address details updated successfully! (Mock)");
+        try {
+            const { apiClient } = await import("@/lib/api");
+
+            // Map array back to object
+            const data = {
+                currentAddress: addressData.find(i => i.id === "addr_1")?.value || "",
+                currentAddressType: addressData.find(i => i.id === "addr_2")?.value || "",
+                permanentAddress: addressData.find(i => i.id === "addr_3")?.value || "",
+            };
+
+            await apiClient.updateAddress(data);
+            alert("Address details updated successfully!");
+        } catch (error) {
+            console.error("Failed to update address:", error);
+            alert("Failed to update details. Please try again.");
+        } finally {
             setIsLoading(false);
-        }, 1000);
+        }
     };
 
     const renderDashboardContent = () => (
@@ -160,26 +249,50 @@ function DashboardContent() {
             {/* Personal Details Section */}
             <section className="max-w-5xl">
                 <h2 className="text-[28px] font-bold text-[#F46300] mb-8">Personal Details</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 mb-8">
                     {personalDetails.map((detail) => (
-                        <div key={detail.label} className="space-y-2.5">
+                        <div key={detail.id} className="space-y-2.5">
                             <label className="text-[15px] font-medium text-[#111827] block px-1">
                                 {detail.label}
                             </label>
                             <div className="relative group">
                                 <input
+                                    ref={el => { inputRefs.current[detail.id] = el; }}
                                     type="text"
-                                    value={detail.value}
-                                    readOnly
-                                    className="w-full bg-[#F3F4F6] border-none rounded-2xl px-6 py-4 text-gray-500 font-medium outline-none pr-12 cursor-default"
+                                    value={detail.value === "-" ? "" : detail.value}
+                                    placeholder={!detail.locked ? "Add this detail" : ""}
+                                    onChange={(e) => handleInputChange(detail.id, e.target.value, 'personal')}
+                                    onBlur={() => handleBlur(detail.id)}
+                                    readOnly={detail.locked || !editingFields[detail.id]}
+                                    className={`w-full border rounded-2xl px-6 py-4 font-medium outline-none pr-12 transition-all shadow-sm ${detail.locked
+                                        ? "bg-[#F3F4F6] border-none text-gray-500 cursor-default"
+                                        : editingFields[detail.id]
+                                            ? "bg-white border-orange-200 ring-2 ring-orange-50 text-gray-900"
+                                            : "bg-[#F9FAFB] border-gray-50 text-gray-700 cursor-default"
+                                        }`}
                                 />
-                                <div className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400">
-                                    <Lock size={18} />
-                                </div>
+                                {detail.locked ? (
+                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400">
+                                        <Lock size={18} />
+                                    </div>
+                                ) : (
+                                    <button
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => toggleEdit(detail.id)}
+                                        className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors p-1"
+                                    >
+                                        {editingFields[detail.id] ? <Check size={18} className="text-green-500" /> : <PencilLine size={18} />}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}
                 </div>
+                <button
+                    onClick={handleUpdatePersonalDetails}
+                    className="bg-[#F46300] text-white px-8 py-3.5 rounded-xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 text-[15px]">
+                    Update now
+                </button>
             </section>
 
             {/* Employment Details Section */}
@@ -192,18 +305,38 @@ function DashboardContent() {
                                 {detail.label}
                             </label>
                             <div className="relative group">
-                                <input
-                                    ref={el => { inputRefs.current[detail.id] = el; }}
-                                    type="text"
-                                    value={detail.value}
-                                    onChange={(e) => handleInputChange(detail.id, e.target.value, 'employment')}
-                                    onBlur={() => handleBlur(detail.id)}
-                                    readOnly={!editingFields[detail.id]}
-                                    className={`w-full border rounded-2xl px-6 py-4 font-medium outline-none pr-12 transition-all shadow-sm ${editingFields[detail.id]
-                                        ? "bg-white border-orange-200 ring-2 ring-orange-50 text-gray-900"
-                                        : "bg-[#F9FAFB] border-gray-50 text-gray-700 cursor-default"
-                                        }`}
-                                />
+                                {detail.id === "emp_4" && editingFields[detail.id] ? (
+                                    <div className="relative w-full">
+                                        <select
+                                            ref={el => { inputRefs.current[detail.id] = el as any; }}
+                                            value={detail.value === "-" ? "" : detail.value}
+                                            onChange={(e) => handleInputChange(detail.id, e.target.value, 'employment')}
+                                            onBlur={() => handleBlur(detail.id)}
+                                            className="w-full border rounded-2xl px-6 py-4 font-medium outline-none pr-12 transition-all shadow-sm bg-white border-orange-200 ring-2 ring-orange-50 text-gray-900 appearance-none cursor-pointer"
+                                        >
+                                            <option value="" disabled>Select Stability</option>
+                                            <option value="VERY_UNSTABLE">Very Unstable</option>
+                                            <option value="SOMEWHAT_UNSTABLE">Somewhat Unstable</option>
+                                            <option value="NEUTRAL">Neutral</option>
+                                            <option value="STABLE">Stable</option>
+                                            <option value="VERY_STABLE">Very Stable</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-12 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+                                    </div>
+                                ) : (
+                                    <input
+                                        ref={el => { inputRefs.current[detail.id] = el; }}
+                                        type="text"
+                                        value={detail.value}
+                                        onChange={(e) => handleInputChange(detail.id, e.target.value, 'employment')}
+                                        onBlur={() => handleBlur(detail.id)}
+                                        readOnly={!editingFields[detail.id]}
+                                        className={`w-full border rounded-2xl px-6 py-4 font-medium outline-none pr-12 transition-all shadow-sm ${editingFields[detail.id]
+                                            ? "bg-white border-orange-200 ring-2 ring-orange-50 text-gray-900"
+                                            : "bg-[#F9FAFB] border-gray-50 text-gray-700 cursor-default"
+                                            }`}
+                                    />
+                                )}
                                 <button
                                     onMouseDown={(e) => e.preventDefault()} // Prevents blur when clicking the button
                                     onClick={() => toggleEdit(detail.id)}
@@ -382,15 +515,14 @@ function DashboardContent() {
             <div className="flex flex-col md:flex-row items-start gap-12 md:gap-24">
                 <div className="flex items-center gap-5">
                     <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-orange-50 flex-shrink-0 bg-gray-50">
-                        {/* <img
+                        <img
                             src="/support.png"
                             alt="Support"
                             className="w-full h-full object-cover"
-                        /> */}
-                        <div className="w-full h-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold">SP</div>
+                        />
                     </div>
                     <div className="space-y-0.5">
-                        <p className="text-[17px] font-bold text-gray-900">Call us: +91 98765 43210</p>
+                        <p className="text-[17px] font-bold text-gray-900">Call us: +91 98309 18171</p>
                         <p className="text-[13px] text-gray-500 font-medium">Mon- Fri | 9:00AM to 10:00PM</p>
                     </div>
                 </div>
@@ -420,10 +552,10 @@ function DashboardContent() {
     );
 
     return (
-        <div className="min-h-screen bg-white pt-6 pb-24 px-4 md:px-12 lg:px-24">
+        <div className="min-h-screen bg-white pt-40 pb-24 px-4 md:px-12 lg:px-24">
             <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-16">
                 {/* Sidebar */}
-                <aside className="w-full lg:w-72 lg:sticky lg:top-28 h-fit self-start">
+                <aside className="w-full lg:w-72 lg:sticky lg:top-40 h-fit self-start">
                     <div className="bg-white rounded-[2rem] p-4 shadow-[0_8px_40px_rgb(0,0,0,0.06)] border border-gray-100 flex flex-col h-fit space-y-2">
                         <nav className="space-y-1">
                             {sidebarItems.map((item) => (
@@ -451,7 +583,12 @@ function DashboardContent() {
                         <div className="pt-2 border-t border-gray-50">
                             <button
                                 className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all font-bold text-gray-500 hover:bg-orange-50 hover:text-orange-600 group"
-                                onClick={() => router.push(getLinkWithRef("/"))}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    localStorage.removeItem('authToken');
+                                    localStorage.removeItem('authUser');
+                                    window.location.replace('/');
+                                }}
                             >
 
                                 <LogOut size={20} className="group-hover:translate-x-1 transition-transform" />

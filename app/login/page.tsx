@@ -2,12 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-export default function LoginPage() {
+function LoginContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirectPath = searchParams.get('redirect') || '/dashboard';
     const [step, setStep] = useState(1);
 
     // Step 1 fields
@@ -101,6 +105,10 @@ export default function LoginPage() {
                     localStorage.setItem('authUser', JSON.stringify(result.user));
 
                     setShowSuccess(true);
+                    // Redirect after a short success animation
+                    setTimeout(() => {
+                        router.push(redirectPath);
+                    }, 1500);
                 } catch (err: any) {
                     setError(err.message || "Invalid OTP. Please try again.");
                 } finally {
@@ -369,5 +377,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" /></div>}>
+            <LoginContent />
+        </Suspense>
     );
 }

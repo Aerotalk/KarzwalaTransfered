@@ -2,8 +2,8 @@
 
 import React from "react";
 import { useAffiliate } from "@/hooks/useAffiliate";
-import { useRouter } from "next/navigation";
-import { Suspense } from "react";
+import { apiClient } from "@/lib/api";
+import { toast } from "sonner";
 
 import {
     LayoutDashboard,
@@ -20,15 +20,26 @@ import {
     MessageCircle,
     ChevronDown,
     Globe,
-    Loader2,
     LogOut
 } from "lucide-react";
+
+import { useRouter } from "next/navigation";
+
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 function AffiliateDashboardContent() {
     const { affiliateRef, getLinkWithRef } = useAffiliate();
     const [activeTab, setActiveTab] = React.useState("Dashboard");
+    const router = useRouter();
+
+    const handleLogout = () => {
+        localStorage.removeItem('partnerAuthToken');
+        localStorage.removeItem('partnerData');
+        window.location.replace('/');
+    };
 
     const [editingFields, setEditingFields] = React.useState<Record<string, boolean>>({});
     const [selectedDate, setSelectedDate] = React.useState({ month: "October", year: "2025", isLifetime: false });
@@ -39,45 +50,77 @@ function AffiliateDashboardContent() {
 
     const inputRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
 
-    // Mock Data State
+    // Fetch Referral Link on Mount
+    React.useEffect(() => {
+        const fetchLink = async () => {
+            try {
+                const res = await apiClient.getPartnerReferralLink();
+                if (res.link) {
+                    setReferralLink(res.link);
+                }
+            } catch (err) {
+                console.error("Failed to fetch referral link", err);
+                // toast.error("Could not load referral link");
+            }
+        };
+        fetchLink();
+    }, []);
+
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const years = ["2023", "2024", "2025"];
+
     const [loading, setLoading] = React.useState(true);
     const [dashboardData, setDashboardData] = React.useState<any>(null);
     const [profileData, setProfileData] = React.useState<any>(null);
     const [earnings, setEarnings] = React.useState<any[]>([]);
 
-    const router = useRouter();
-
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const years = ["2023", "2024", "2025"];
-
-    // Fetch Mock Data on mount
+    // Fetch dashboard data on mount
     React.useEffect(() => {
-        setTimeout(() => {
-            setDashboardData({
-                stats: {
-                    totalUsers: 145,
-                    totalApplications: 67
+        const fetchDashboardData = async () => {
+            try {
+                // Check authentication
+                const partnerToken = localStorage.getItem('partnerAuthToken');
+                if (!partnerToken) {
+                    toast.error("Please login to access dashboard");
+                    window.location.href = '/login-agent';
+                    return;
                 }
-            });
 
-            setReferralLink("https://karzwala.in/signup?ref=TEST_REF_123");
+                // Fetch dashboard stats
+                console.log("Fetching dashboard stats...");
+                const dashboardResponse = await apiClient.getPartnerDashboard();
+                setDashboardData(dashboardResponse);
 
-            setProfileData({
-                name: "Amit Kumar",
-                email: "amit.kumar@example.com",
-                phone: "+91 98989 89898",
-                panNumber: "ABCDE1234F"
-            });
+                // Fetch referral link
+                console.log("Fetching referral link...");
+                const linkResponse = await apiClient.getPartnerReferralLink();
+                if (linkResponse.link) {
+                    setReferralLink(linkResponse.link);
+                }
 
-            setEarnings([
-                { id: "APP001", name: "Ravi Singh", amount: "₹50,000", status: "Approved", rawStatus: "APPROVED", date: "10-10-2025", earnings: "₹500" },
-                { id: "APP002", name: "Sneha Gupta", amount: "₹1,20,000", status: "In Process", rawStatus: "IN_PROCESS", date: "12-10-2025", earnings: "₹0" },
-            ]);
+                // Fetch profile data
+                console.log("Fetching profile...");
+                const profileResponse = await apiClient.getPartnerProfile();
+                setProfileData(profileResponse);
 
-            setLoading(false);
-        }, 1000);
-    }, []);
+                // Fetch earnings
+                console.log("Fetching earnings...");
+                const earningsResponse = await apiClient.getPartnerEarnings();
+                setEarnings(earningsResponse);
 
+            } catch (error: any) {
+                console.error('Failed to fetch dashboard data:', error);
+                if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+                    localStorage.removeItem('partnerAuthToken');
+                    window.location.href = '/login-agent';
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, [router]);
 
     const handleApplyFilter = () => {
         setSelectedDate(tempDate);
@@ -130,11 +173,19 @@ function AffiliateDashboardContent() {
         },
         {
             label: "Earnings",
-            value: loading ? "..." : "₹12,450", // Mock Earnings
+            value: loading ? "..." : "₹0", // TODO: Add earnings calculation
             icon: <IndianRupee size={20} className="text-green-500" />,
             bgColor: "bg-green-50"
         },
     ];
+
+    /* 
+    const earnings = [
+        { id: "5442898006777", name: "Ratul Das", amount: "₹52,000", status: "In process", rawStatus: "IN_PROCESS", date: "02-05-2025", earnings: "₹750" },
+        { id: "5442898006777", name: "Ratul Das", amount: "₹52,000", status: "Approved", rawStatus: "APPROVED", date: "02-05-2025", earnings: "₹750" },
+        { id: "5442898006777", name: "Ratul Das", amount: "₹52,000", status: "Rejected", rawStatus: "REJECTED", date: "02-05-2025", earnings: "₹750" },
+    ];
+    */
 
     const renderDashboard = () => (
         <div className="space-y-12">
@@ -260,10 +311,10 @@ function AffiliateDashboardContent() {
                             onClick={() => {
                                 if (referralLink) {
                                     navigator.clipboard.writeText(referralLink);
-                                    alert("Link copied to clipboard!"); // Changed from toast
+                                    toast.success("Link copied to clipboard!");
                                 } else if (typeof window !== 'undefined') {
                                     navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${affiliateRef || 'YOUR_CODE'}`);
-                                    alert("Link copied!");
+                                    toast.success("Link copied!");
                                 }
                             }}
                         >
@@ -316,7 +367,7 @@ function AffiliateDashboardContent() {
                                         </td>
                                         <td className="px-8 py-6 text-left">
                                             <span className={`inline-flex px-3 py-1 rounded-lg text-[13px] font-bold tracking-tight ${(item.status === 'Approved' || item.rawStatus === 'APPROVED') ? 'bg-green-50 text-green-600' :
-                                                (item.status === 'Rejected' || item.rawStatus === 'REJECTED') ? 'bg-red-50 text-red-600' :
+                                                (item.status === 'Rejected' || item.rawStatus === 'REJECTED') ? 'bg-orange-50 text-orange-600' :
                                                     'bg-blue-50 text-blue-600'
                                                 }`}>
                                                 {item.status}
@@ -379,10 +430,10 @@ function AffiliateDashboardContent() {
                 <h2 className="text-[28px] font-bold text-[#F46300] mb-8">Profile Details</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 mb-8">
                     {[
-                        { id: "fullName", label: "Full Name (as per PAN)", value: loading ? "Loading..." : (profileData?.name || ""), editable: false },
-                        { id: "email", label: "Email Address", value: loading ? "Loading..." : (profileData?.email || ""), editable: false },
-                        { id: "phoneNumber", label: "Phone Number", value: loading ? "Loading..." : (profileData?.phone || ""), editable: false },
-                        { id: "panNumber", label: "PAN Number", value: loading ? "Loading..." : (profileData?.panNumber || "NOT UPDATED"), editable: false },
+                        { id: "fullName", label: "Full Name (as per PAN)", value: loading ? "Loading..." : (profileData?.data?.name || profileData?.name || ""), editable: false },
+                        { id: "email", label: "Email Address", value: loading ? "Loading..." : (profileData?.data?.email || profileData?.email || ""), editable: false },
+                        { id: "phoneNumber", label: "Phone Number", value: loading ? "Loading..." : (profileData?.data?.phone || profileData?.phone || ""), editable: false },
+                        { id: "panNumber", label: "PAN Number", value: loading ? "Loading..." : (profileData?.data?.panNumber || profileData?.panNumber || "NOT UPDATED"), editable: false },
                     ].map((field) => (
                         <div key={field.id} className="space-y-2.5">
                             <label className="text-[15px] font-medium text-[#111827] block px-1">{field.label}</label>
@@ -431,15 +482,14 @@ function AffiliateDashboardContent() {
             <div className="flex flex-col md:flex-row items-start gap-12 md:gap-24">
                 <div className="flex items-center gap-5">
                     <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-orange-50 flex-shrink-0 bg-gray-50">
-                        {/* <img
+                        <img
                             src="/support.png"
                             alt="Support"
                             className="w-full h-full object-cover"
-                        /> */}
-                        <div className="w-full h-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold">SP</div>
+                        />
                     </div>
                     <div className="space-y-0.5">
-                        <p className="text-[17px] font-bold text-gray-900">Call us: +91 98765 43210</p>
+                        <p className="text-[17px] font-bold text-gray-900">Call us: +91 98309 18171</p>
                         <p className="text-[13px] text-gray-500 font-medium">Mon- Fri | 9:00AM to 10:00PM</p>
                     </div>
                 </div>
@@ -469,10 +519,10 @@ function AffiliateDashboardContent() {
     );
 
     return (
-        <div className="min-h-screen bg-white pt-6 pb-24 px-4 md:px-12 lg:px-24">
-            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-16">
+        <div className="min-h-screen bg-white pt-40 pb-24 px-4 md:px-12 lg:px-24">
+            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-16 relative">
                 {/* Sidebar */}
-                <aside className="w-full lg:w-72 lg:sticky lg:top-28 h-fit self-start">
+                <aside className="w-full lg:w-72 lg:sticky lg:top-36 h-fit self-start overflow-y-auto custom-scrollbar max-h-[calc(100vh-140px)] z-20">
                     <div className="bg-white rounded-[2rem] p-4 shadow-[0_8px_40px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-col h-fit space-y-2">
                         <nav className="space-y-1">
                             {sidebarItems.map((item) => (
@@ -491,10 +541,11 @@ function AffiliateDashboardContent() {
                                 </button>
                             ))}
                         </nav>
+
                         <div className="pt-2 border-t border-gray-50">
                             <button
                                 className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all font-bold text-gray-500 hover:bg-orange-50 hover:text-orange-600 group"
-                                onClick={() => router.push(getLinkWithRef("/"))}
+                                onClick={handleLogout}
                             >
                                 <LogOut size={20} className="group-hover:translate-x-1 transition-transform" />
                                 <span className="text-[15px]">Log out</span>
