@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-export default function RegisterPage() {
+function RegisterContent() {
+    const searchParams = useSearchParams();
     const [step, setStep] = useState(1);
 
     // Step 1 fields
@@ -39,6 +41,17 @@ export default function RegisterPage() {
         return otp.every(digit => digit !== "");
     };
 
+    // Capture Attribution info from URL
+    useEffect(() => {
+        const pid = searchParams.get('pid');
+        const ts = searchParams.get('ts');
+        const sig = searchParams.get('sig');
+        if (pid && ts && sig) {
+            const attribution = { partnerId: pid, timestamp: ts, signature: sig };
+            localStorage.setItem('lin_attribution', JSON.stringify(attribution));
+        }
+    }, [searchParams]);
+
     // API Functions
     const requestOtp = async (phone: string) => {
         const response = await fetch(`${API_BASE_URL}/api/auth/phone/request-otp`, {
@@ -56,10 +69,22 @@ export default function RegisterPage() {
     };
 
     const verifyOtp = async (phone: string, code: string) => {
+        let attribution = null;
+        if (typeof window !== 'undefined') {
+            const storedAttr = localStorage.getItem('lin_attribution');
+            if (storedAttr) {
+                try {
+                    attribution = JSON.parse(storedAttr);
+                } catch (e) {
+                    console.error("Failed to parse attribution", e);
+                }
+            }
+        }
+
         const response = await fetch(`${API_BASE_URL}/api/auth/phone/verify-otp`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ phone: `+91${phone}`, code })
+            body: JSON.stringify({ phone: `+91${phone}`, code, attribution })
         });
 
         if (!response.ok) {
@@ -366,5 +391,13 @@ export default function RegisterPage() {
                 </div>
             </div>
         </>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <RegisterContent />
+        </Suspense>
     );
 }
