@@ -539,6 +539,7 @@ class ApiClient {
     partnerType: 'DSA' | 'BC' | 'AFFILIATE' | 'API_PARTNER';
     gstNumber?: string;
     panNumber?: string;
+    firmName?: string;
     address?: string;
     city?: string;
     state?: string;

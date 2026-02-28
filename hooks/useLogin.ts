@@ -20,10 +20,10 @@ export const useLogin = () => {
         setError(null);
         try {
             // Assuming users/login checks validity and sends an OTP
-            const response = await apiClient.post('/api/users/login', payload);
+            const response = await apiClient.loginUser(payload.phoneNumber, payload.dob);
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to request login OTP');
+            setError(err instanceof Error ? err.message : 'Failed to request login OTP');
             throw err;
         } finally {
             setIsLoading(false);
@@ -34,13 +34,10 @@ export const useLogin = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await apiClient.post('/api/auth/phone/verify-otp', payload);
-            if (response.token) {
-                apiClient.setToken(response.token, false);
-            }
+            const response = await apiClient.verifyPhoneOtp(payload.phoneNumber, payload.otp);
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to verify login OTP');
+            setError(err instanceof Error ? err.message : 'Failed to verify login OTP');
             throw err;
         } finally {
             setIsLoading(false);
@@ -51,10 +48,10 @@ export const useLogin = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await apiClient.get('/api/users/profile/complete');
+            const response = await apiClient.getCompleteProfile();
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to fetch complete profile');
+            setError(err instanceof Error ? err.message : 'Failed to fetch complete profile');
             throw err;
         } finally {
             setIsLoading(false);
@@ -62,7 +59,8 @@ export const useLogin = () => {
     };
 
     const logout = () => {
-        apiClient.clearTokens();
+        apiClient.clearToken();
+        apiClient.clearPartnerToken();
     };
 
     return {

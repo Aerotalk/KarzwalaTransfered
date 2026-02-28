@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiClient, ApiError } from '../lib/api';
+import { apiClient } from '../lib/api';
 
 interface PartnerLoginPayload {
     identifier: string; // Email or Phone
@@ -23,16 +23,10 @@ export const usePartnerAuth = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await apiClient.post('/api/partners/login', payload);
-            if (response.token) {
-                apiClient.setToken(response.token, true); // true indicates partnerToken
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem('partnerData', JSON.stringify(response.partner || {}));
-                }
-            }
+            const response = await apiClient.loginPartner(payload.identifier, payload.password);
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to login partner');
+            setError(err instanceof Error ? err.message : 'Failed to login partner');
             throw err;
         } finally {
             setIsLoading(false);
@@ -43,10 +37,10 @@ export const usePartnerAuth = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await apiClient.post('/api/partners/login/request-otp', payload);
+            const response = await apiClient.requestPartnerLoginOtp(payload.phone);
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to request partner OTP');
+            setError(err instanceof Error ? err.message : 'Failed to request partner OTP');
             throw err;
         } finally {
             setIsLoading(false);
@@ -57,16 +51,10 @@ export const usePartnerAuth = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await apiClient.post('/api/partners/login/verify-otp', payload);
-            if (response.token) {
-                apiClient.setToken(response.token, true);
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem('partnerData', JSON.stringify(response.partner || {}));
-                }
-            }
+            const response = await apiClient.verifyPartnerLoginOtp(payload.phone, payload.otp);
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to verify partner OTP');
+            setError(err instanceof Error ? err.message : 'Failed to verify partner OTP');
             throw err;
         } finally {
             setIsLoading(false);
@@ -77,11 +65,10 @@ export const usePartnerAuth = () => {
         setIsLoading(true);
         setError(null);
         try {
-            // usePartnerToken = true parameter passed to getter
-            const response = await apiClient.get('/api/partners/dashboard', true);
+            const response = await apiClient.getPartnerDashboard();
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to load partner dashboard');
+            setError(err instanceof Error ? err.message : 'Failed to load partner dashboard');
             throw err;
         } finally {
             setIsLoading(false);
@@ -92,10 +79,10 @@ export const usePartnerAuth = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await apiClient.get('/api/partners/link', true);
+            const response = await apiClient.getPartnerReferralLink();
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to generate tracking link');
+            setError(err instanceof Error ? err.message : 'Failed to generate tracking link');
             throw err;
         } finally {
             setIsLoading(false);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiClient, ApiError } from '../lib/api';
+import { apiClient } from '../lib/api';
 
 interface RequestOtpPayload {
     phoneNumber: string;
@@ -38,10 +38,10 @@ export const useSignup = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await apiClient.post('/api/auth/phone/request-otp', payload);
+            const response = await apiClient.requestPhoneOtp(payload.phoneNumber);
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to request OTP');
+            setError(err instanceof Error ? err.message : 'Failed to request OTP');
             throw err;
         } finally {
             setIsLoading(false);
@@ -52,13 +52,10 @@ export const useSignup = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await apiClient.post('/api/auth/phone/verify-otp', payload);
-            if (response.token) {
-                apiClient.setToken(response.token, false);
-            }
+            const response = await apiClient.verifyPhoneOtp(payload.phoneNumber, payload.otp);
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to verify OTP');
+            setError(err instanceof Error ? err.message : 'Failed to verify OTP');
             throw err;
         } finally {
             setIsLoading(false);
@@ -70,10 +67,14 @@ export const useSignup = () => {
         setError(null);
         try {
             const emailToUse = payload.email || `user91${Date.now()}@loaninneed.com`;
-            const response = await apiClient.post('/api/users/register', { ...payload, email: emailToUse });
+            const response = await apiClient.registerUser({
+                ...payload,
+                email: emailToUse,
+                gender: payload.gender || 'Other'
+            });
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to register profile');
+            setError(err instanceof Error ? err.message : 'Failed to register profile');
             throw err;
         } finally {
             setIsLoading(false);
@@ -84,10 +85,10 @@ export const useSignup = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await apiClient.post('/api/kyc', payload);
+            const response = await apiClient.submitKYC(payload as any);
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to submit KYC');
+            setError(err instanceof Error ? err.message : 'Failed to submit KYC');
             throw err;
         } finally {
             setIsLoading(false);
@@ -102,10 +103,10 @@ export const useSignup = () => {
             files.salarySlips?.forEach(file => formData.append('salarySlips', file));
             files.bankStatements?.forEach(file => formData.append('bankStatements', file));
 
-            const response = await apiClient.post('/api/document/submit', formData);
+            const response = await apiClient.submitDocuments(formData);
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to upload documents');
+            setError(err instanceof Error ? err.message : 'Failed to upload documents');
             throw err;
         } finally {
             setIsLoading(false);
@@ -117,10 +118,10 @@ export const useSignup = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await apiClient.post('/api/auth/aadhaar/verify-otp', payload);
+            const response = await apiClient.verifyAadhaarOtp(payload.aadhaarNumber || '', payload.otp || '');
             return response;
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to verify Aadhaar');
+            setError(err instanceof Error ? err.message : 'Failed to verify Aadhaar');
             throw err;
         } finally {
             setIsLoading(false);
@@ -131,17 +132,14 @@ export const useSignup = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const formData = new FormData();
-            formData.append('selfie', selfie);
-
             const [selfieRes, locationRes] = await Promise.all([
-                apiClient.post('/api/selfie/upload', formData),
-                apiClient.post('/api/users/location', location)
+                apiClient.uploadSelfie(selfie),
+                apiClient.submitLocation(location)
             ]);
 
             return { selfieRes, locationRes };
         } catch (err: any) {
-            setError(err instanceof ApiError ? err.message : 'Failed to upload selfie / location');
+            setError(err instanceof Error ? err.message : 'Failed to upload selfie / location');
             throw err;
         } finally {
             setIsLoading(false);
