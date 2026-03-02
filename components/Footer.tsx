@@ -203,7 +203,10 @@ export default function Footer() {
                 <Link href="/careers">Careers</Link>
               </li>
               <li>
-                <Link href="/contact-us">Contact us</Link>
+                <Link href="/contact">Contact us</Link>
+              </li>
+              <li>
+                <Link href="/terms-and-conditions">Terms & conditions</Link>
               </li>
             </ul>
           </div>
