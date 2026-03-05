@@ -50,7 +50,7 @@ export function FeaturesSection() {
   ]
 
   return (
-    <section className="bg-white py-16 md:py-24">
+    <section id="explore-products" className="bg-white py-16 md:py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mb-12 text-center md:text-left">

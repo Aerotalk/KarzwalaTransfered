@@ -109,7 +109,7 @@ export default function Footer() {
             <h4 className="font-semibold text-primary mb-3">Useful links</h4>
             <ul className="space-y-2 text-sm text-gray-700">
               <li>
-                <Link href="/personal-loan/insta-loan">Insta loans</Link>
+                <Link href="/#explore-products">Insta loans</Link>
               </li>
               <li>
                 <Link href="/track-loan">Track loan</Link>

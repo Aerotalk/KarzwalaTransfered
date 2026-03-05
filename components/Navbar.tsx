@@ -86,7 +86,7 @@ export default function Navbar() {
             <span className="text-gray-300">|</span>
             <Link href="/enquire-now" className="text-orange-500 hover:text-orange-600 transition-colors">Enquire now</Link>
             <span className="text-gray-300">|</span>
-            <Link href="/career" className="text-orange-500 hover:text-orange-600 transition-colors">Career</Link>
+            <Link href="/careers" className="text-orange-500 hover:text-orange-600 transition-colors">Career</Link>
           </div>
         </div>
       </div>
